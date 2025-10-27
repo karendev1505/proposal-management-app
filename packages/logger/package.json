@@ -1,0 +1,13 @@
+{
+  "name": "@proposal/logger",
+  "version": "0.0.1",
+  "description": "Shared logger package for proposal project",
+  "private": true,
+  "main": "src/logger.service.ts",
+  "dependencies": {
+    "@nestjs/common": "^11.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

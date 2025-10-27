@@ -1,0 +1,46 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    platform: linux/amd64
+    user: root
+    env_file:
+      - ./devops/.env.docker.dev
+    depends_on:
+      - database
+    networks:
+      - common-net
+    volumes:
+      - ./:/app
+      - node_modules:/app/node_modules
+    entrypoint: ['./entrypoint.sh']
+    command: ['pnpm', 'dev']
+    ports:
+      - '3000:3000'
+      - '3001:3001'
+      - '5556:5555'
+
+  database:
+    image: postgres:16.3
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres_proposal
+      - POSTGRES_PASSWORD=postgres_proposal
+      - POSTGRES_DB=proposal_db
+    ports:
+      - '5432:5432'
+    restart: always
+    networks:
+      - common-net
+
+volumes:
+  postgres_data:
+  node_modules:
+
+networks:
+  common-net: {}

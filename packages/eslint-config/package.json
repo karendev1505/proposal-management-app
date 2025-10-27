@@ -1,0 +1,12 @@
+{
+  "name": "@proposal/eslint-config",
+  "version": "0.0.1",
+  "description": "Shared ESLint configuration for proposal project",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.2"
+  }
+}

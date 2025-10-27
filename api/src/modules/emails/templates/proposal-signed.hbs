@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proposal Signed</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #10b981; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #f9fafb; }
+        .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
+        .success { background: #d1fae5; border: 1px solid #10b981; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✅ Proposal Signed</h1>
+        </div>
+        <div class="content">
+            <h2>Hello {{recipientName}},</h2>
+            
+            <div class="success">
+                <h3>Great news! The proposal has been signed.</h3>
+            </div>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3>{{proposalTitle}}</h3>
+                <p><strong>Signed by:</strong> {{signerName}}</p>
+                <p><strong>Signed on:</strong> {{signedDate}}</p>
+                <p><strong>Status:</strong> <span style="color: #10b981; font-weight: bold;">SIGNED</span></p>
+            </div>
+            
+            <p>The proposal is now complete and all parties have been notified.</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{proposalLink}}" class="button" style="display: inline-block; padding: 12px 24px; background: #10b981; color: white; text-decoration: none; border-radius: 4px;">View Signed Proposal</a>
+            </div>
+            
+            <p>Thank you for using our proposal management system!</p>
+        </div>
+        <div class="footer">
+            <p>This email was sent by the Proposal Management System</p>
+            <p>© 2024 Proposal Management System. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

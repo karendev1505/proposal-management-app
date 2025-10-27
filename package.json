@@ -1,0 +1,36 @@
+{
+  "name": "proposal",
+  "version": "0.0.1",
+  "description": "Proposal management system with NestJS API and Next.js frontend",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@8.15.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev",
+    "start": "pnpm -r start",
+    "start:api": "pnpm --filter api start",
+    "start:web": "pnpm --filter web dev",
+    "start:dev": "pnpm -r --parallel start:dev",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "test:watch": "pnpm -r test:watch",
+    "test:cov": "pnpm -r test:cov",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "clean": "pnpm -r clean && rm -rf node_modules",
+    "install:all": "pnpm install",
+    "docker:dev": "docker-compose -f docker-compose.dev.yaml up --build",
+    "docker:prod": "docker-compose up --build",
+    "docker:down": "docker-compose down",
+    "docker:down:dev": "docker-compose -f docker-compose.dev.yaml down",
+    "prisma:generate": "pnpm --filter api prisma generate",
+    "prisma:migrate": "pnpm --filter api prisma migrate dev",
+    "prisma:seed": "pnpm --filter api prisma db seed"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  }
+}

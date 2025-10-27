@@ -1,0 +1,58 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    env_file:
+      - ./devops/.env.docker
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - common-net
+    ports:
+      - '3001:3001'
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    env_file:
+      - ./devops/.env.docker
+    depends_on:
+      - api
+    networks:
+      - common-net
+    ports:
+      - '3000:3000'
+    restart: unless-stopped
+
+  database:
+    image: postgres:16.3
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres_proposal
+      - POSTGRES_PASSWORD=postgres_proposal
+      - POSTGRES_DB=proposal_db
+    ports:
+      - '5432:5432'
+    restart: unless-stopped
+    networks:
+      - common-net
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres_proposal -d proposal_db']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+
+networks:
+  common-net: {}

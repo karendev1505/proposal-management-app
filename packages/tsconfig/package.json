@@ -1,0 +1,12 @@
+{
+  "name": "@proposal/tsconfig",
+  "version": "0.0.1",
+  "description": "Shared TypeScript configurations for proposal project",
+  "private": true,
+  "main": "base.json",
+  "files": [
+    "base.json",
+    "next.json",
+    "node.json"
+  ]
+}

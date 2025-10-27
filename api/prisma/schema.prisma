@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  password     String
+  role         Role     @default(USER)
+  refreshToken String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  proposals Proposal[]
+  signatures Signature[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Proposal {
+  id          String      @id @default(cuid())
+  title       String
+  content     String
+  status      ProposalStatus @default(DRAFT)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  // Relations
+  authorId    String
+  author      User        @relation(fields: [authorId], references: [id])
+  templateId  String?
+  template    Template?   @relation(fields: [templateId], references: [id])
+  signatures  Signature[]
+
+  @@map("proposals")
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  name        String
+  content     String
+  category    String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  proposals   Proposal[]
+
+  @@map("templates")
+}
+
+model Signature {
+  id        String   @id @default(cuid())
+  signedAt  DateTime @default(now())
+  
+  // Relations
+  proposalId String
+  proposal   Proposal @relation(fields: [proposalId], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@unique([proposalId, userId])
+  @@map("signatures")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  type      NotificationType @default(INFO)
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+enum ProposalStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  SIGNED
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}

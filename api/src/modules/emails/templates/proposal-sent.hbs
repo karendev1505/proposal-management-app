@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proposal Sent</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #3b82f6; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #f9fafb; }
+        .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
+        .button { display: inline-block; padding: 12px 24px; background: #3b82f6; color: white; text-decoration: none; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 New Proposal Sent</h1>
+        </div>
+        <div class="content">
+            <h2>Hello {{recipientName}},</h2>
+            <p>A new proposal has been sent to you:</p>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3>{{proposalTitle}}</h3>
+                <p><strong>From:</strong> {{senderName}}</p>
+                <p><strong>Date:</strong> {{sentDate}}</p>
+                <p><strong>Status:</strong> {{status}}</p>
+            </div>
+            
+            <p>Please review the proposal and take the necessary action.</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{proposalLink}}" class="button">View Proposal</a>
+            </div>
+            
+            <p>If you have any questions, please contact the sender directly.</p>
+        </div>
+        <div class="footer">
+            <p>This email was sent by the Proposal Management System</p>
+            <p>© 2024 Proposal Management System. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
