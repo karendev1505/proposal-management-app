@@ -65,10 +65,12 @@ jobs:
       env:
         DATABASE_URL: postgresql://postgres_proposal:postgres_proposal@localhost:5432/proposal_db?schema=public
 
+  # Docker build job - only runs if Docker Hub credentials are configured
+  # To enable: Add DOCKER_USERNAME and DOCKER_PASSWORD secrets in GitHub repository settings
   docker-build:
     runs-on: ubuntu-latest
     needs: test
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && secrets.DOCKER_USERNAME != ''
     
     steps:
     - uses: actions/checkout@v4
