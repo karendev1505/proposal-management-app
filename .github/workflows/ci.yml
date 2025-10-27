@@ -28,16 +28,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22.14.0'
-        cache: 'npm'
-    
     - name: Setup pnpm
       uses: pnpm/action-setup@v2
       with:
         version: 8.15.4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22.14.0'
+        cache: 'pnpm'
     
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
@@ -56,6 +56,9 @@ jobs:
       run: pnpm test
       env:
         DATABASE_URL: postgresql://postgres_proposal:postgres_proposal@localhost:5432/proposal_db?schema=public
+        NODE_ENV: test
+        JWT_SECRET: test-jwt-secret
+        JWT_REFRESH_SECRET: test-refresh-secret
     
     - name: Build projects
       run: pnpm build
