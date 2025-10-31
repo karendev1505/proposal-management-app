@@ -11,60 +11,89 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  name         String?
-  password     String
-  role         Role     @default(USER)
-  refreshToken String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String   @id @default(uuid())
+  email           String   @unique
+  name            String?
+  password        String
+  role            Role     @default(USER)
+  avatarUrl       String?
+  isEmailVerified Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Relations
-  proposals Proposal[]
-  signatures Signature[]
+  refreshTokens RefreshToken[]
+  proposals     Proposal[]
+  signatures    Signature[]
   notifications Notification[]
+  templates     Template[]
 
   @@map("users")
 }
 
-model Proposal {
-  id          String      @id @default(cuid())
-  title       String
-  content     String
-  status      ProposalStatus @default(DRAFT)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  
+model RefreshToken {
+  id         String   @id @default(uuid())
+  tokenHash  String   @unique
+  revoked    Boolean  @default(false)
+  expiresAt  DateTime
+  deviceInfo String?
+  createdAt  DateTime @default(now())
+
   // Relations
-  authorId    String
-  author      User        @relation(fields: [authorId], references: [id])
-  templateId  String?
-  template    Template?   @relation(fields: [templateId], references: [id])
-  signatures  Signature[]
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Proposal {
+  id        String         @id @default(cuid())
+  title     String
+  content   String
+  status    ProposalStatus @default(DRAFT)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  // Relations
+  authorId   String
+  author     User        @relation(fields: [authorId], references: [id])
+  templateId String?
+  template   Template?   @relation(fields: [templateId], references: [id])
+  signatures Signature[]
 
   @@map("proposals")
 }
 
+enum TemplateType {
+  PROPOSAL
+  EMAIL
+}
+
 model Template {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   name        String
+  type        TemplateType @default(PROPOSAL)
   content     String
+  subject     String?      // For email templates
   category    String?
-  isPublic    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isPublic    Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   // Relations
+  authorId    String?
+  author      User?       @relation(fields: [authorId], references: [id], onDelete: SetNull)
   proposals   Proposal[]
 
+  @@index([authorId])
   @@map("templates")
 }
 
 model Signature {
-  id        String   @id @default(cuid())
-  signedAt  DateTime @default(now())
-  
+  id       String   @id @default(cuid())
+  signedAt DateTime @default(now())
+
   // Relations
   proposalId String
   proposal   Proposal @relation(fields: [proposalId], references: [id])
@@ -81,13 +110,13 @@ enum Role {
 }
 
 model Notification {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   title     String
   message   String
   type      NotificationType @default(INFO)
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
 
   // Relations
   userId String

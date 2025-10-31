@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { refreshTokenQueue } from './refreshTokenQueue';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -32,23 +33,41 @@ api.interceptors.response.use(
     
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      
+
       try {
         const refreshToken = Cookies.get('refreshToken');
-        if (refreshToken) {
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+
+        let accessToken: string;
+
+        if (refreshTokenQueue.refreshing) {
+          // Wait for the token to be refreshed
+          accessToken = await refreshTokenQueue.enqueue();
+        } else {
+          refreshTokenQueue.refreshing = true;
+
           const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
             refreshToken,
           });
           
-          const { accessToken, refreshToken: newRefreshToken } = response.data;
-          Cookies.set('accessToken', accessToken, { expires: 7 });
-          Cookies.set('refreshToken', newRefreshToken, { expires: 30 });
+          const { accessToken: newToken, refreshToken: newRefreshToken } = response.data;
+          Cookies.set('accessToken', newToken, { expires: 7, secure: true });
+          Cookies.set('refreshToken', newRefreshToken, { expires: 30, secure: true });
           
-          // Retry the original request
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-          return api(originalRequest);
+          refreshTokenQueue.resolveQueue(newToken);
+          refreshTokenQueue.refreshing = false;
+          accessToken = newToken;
         }
+        
+        // Retry the original request
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return api(originalRequest);
       } catch (refreshError) {
+        refreshTokenQueue.rejectQueue(refreshError);
+        refreshTokenQueue.refreshing = false;
+        
         // Refresh failed, redirect to login
         Cookies.remove('accessToken');
         Cookies.remove('refreshToken');

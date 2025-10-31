@@ -37,6 +37,19 @@ export class EmailsService {
     this.initializeEmailProviders();
   }
 
+  async getSmtpConfig(): Promise<any> {
+    const config = {
+      host: this.configService.get<string>('SMTP_HOST'),
+      port: this.configService.get<number>('SMTP_PORT'),
+      secure: this.configService.get<boolean>('SMTP_SECURE'),
+      auth: {
+        user: this.configService.get<string>('SMTP_USER'),
+        pass: this.configService.get<string>('SMTP_PASS'),
+      },
+    };
+    return config.auth.user && config.auth.pass ? config : null;
+  }
+
   private initializeEmailProviders() {
     // Initialize SendGrid
     const sendGridApiKey = this.configService.get<string>('SENDGRID_API_KEY');

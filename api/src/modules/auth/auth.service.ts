@@ -4,6 +4,7 @@ import {
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma.service';
 import * as bcrypt from 'bcrypt';
@@ -32,9 +33,17 @@ export interface AuthResponse {
 @Injectable()
 export class AuthService {
   constructor(
-    private prisma: PrismaService,
-    private jwtService: JwtService,
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
   ) {}
+
+  async getJwtConfig(): Promise<any> {
+    return {
+      secret: this.configService.get('JWT_SECRET'),
+      expiresIn: this.configService.get('JWT_EXPIRATION_TIME'),
+    };
+  }
 
   async register(registerDto: RegisterDto): Promise<AuthResponse> {
     const { email, name, password } = registerDto;

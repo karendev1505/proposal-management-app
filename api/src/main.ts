@@ -1,7 +1,8 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { Logger } from '@nestjs/common';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -15,6 +16,12 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
       transform: true,
     }));
+
+    // Global interceptors
+    app.useGlobalInterceptors(new LoggingInterceptor());
+    
+    // Global filters
+    app.useGlobalFilters(new HttpExceptionFilter());
 
     // CORS configuration
     app.enableCors({

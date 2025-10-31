@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { configValidationSchema } from './config/validation.schema';
 import { AppController } from './app.controller';
-import { PrismaService } from './prisma.service';
+import { SharedModule } from './modules/shared/shared.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { EmailsModule } from './modules/emails/emails.module';
 import { UsersModule } from './modules/users/users.module';
@@ -12,13 +13,19 @@ import { StatsModule } from './modules/stats/stats.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { FilesModule } from './modules/files/files.module';
 import { ClientsModule } from './modules/clients/clients.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
+      validationSchema: configValidationSchema,
+      validationOptions: {
+        abortEarly: true,
+      },
     }),
+    SharedModule,
     AuthModule,
     EmailsModule,
     UsersModule,
@@ -29,8 +36,8 @@ import { ClientsModule } from './modules/clients/clients.module';
     NotificationsModule,
     FilesModule,
     ClientsModule,
+    HealthModule,
   ],
   controllers: [AppController],
-  providers: [PrismaService],
 })
 export class AppModule {}

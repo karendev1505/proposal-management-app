@@ -1,26 +1,24 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
-import { Prisma, TemplateType as PrismaTemplateType } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
 import { QueryTemplateDto } from './dto/query-template.dto';
 
-type TemplateWithRelations = Prisma.TemplateGetPayload<{
+type TemplateWithAuthor = Prisma.TemplateGetPayload<{
   include: { author: true };
 }>;
 
-@Injectable()
-export class TemplatesService {
-  constructor(private prisma: PrismaService) {}table, NotFoundException, ForbiddenException } from '@nestjs/common';
+@Injectable() { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
-import { Prisma, TemplateType } from '@prisma/client';
+import { Prisma, Template, User, TemplateType } from '@prisma/client';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
 import { QueryTemplateDto } from './dto/query-template.dto';
 
-type TemplateWithRelations = Prisma.TemplateGetPayload<{
-  include: { author: true };
-}>;
+type TemplateWithAuthor = Template & {
+  author: User | null;
+};
 
 @Injectable()
 export class TemplatesService {
@@ -41,14 +39,14 @@ export class TemplatesService {
         {
           OR: [
             { isPublic: true },
-            { author: { id: userId } },
+            { authorId: userId },
           ],
         },
       ],
     };
 
     if (type) {
-      where.type = type as Prisma.EnumTemplateTypeFilter;
+      where.type = type;
     }
 
     const [templates, total] = await Promise.all([
@@ -73,7 +71,7 @@ export class TemplatesService {
     };
   }
 
-  async findOne(id: string, userId?: string): Promise<TemplateWithRelations> {
+  async findOne(id: string, userId?: string): Promise<TemplateWithAuthor> {
     const template = await this.prisma.template.findUnique({
       where: { id },
       include: { author: true },
@@ -83,31 +81,27 @@ export class TemplatesService {
       throw new NotFoundException('Template not found');
     }
 
-    if (!template.isPublic && template.author?.id !== userId) {
+    if (!template.isPublic && template.authorId !== userId) {
       throw new ForbiddenException('Access denied');
     }
 
     return template;
   }
 
-  async create(data: CreateTemplateDto, userId: string): Promise<TemplateWithRelations> {
-    const { type, ...rest } = data;
+  async create(data: CreateTemplateDto, userId: string): Promise<TemplateWithAuthor> {
     return this.prisma.template.create({
       data: {
-        ...rest,
-        type: type.toUpperCase() as Prisma.EnumTemplateTypeFieldUpdateOperationsInput["set"],
-        author: {
-          connect: { id: userId }
-        }
+        ...data,
+        authorId: userId,
       },
       include: { author: true },
     });
   }
 
-  async update(id: string, data: UpdateTemplateDto, userId: string): Promise<TemplateWithRelations> {
+  async update(id: string, data: UpdateTemplateDto, userId: string): Promise<TemplateWithAuthor> {
     const template = await this.findOne(id, userId);
 
-    if (!template.isPublic && template.author?.id !== userId) {
+    if (!template.isPublic && template.authorId !== userId) {
       throw new ForbiddenException('Access denied');
     }
 
@@ -121,7 +115,7 @@ export class TemplatesService {
   async remove(id: string, userId: string): Promise<{ message: string }> {
     const template = await this.findOne(id, userId);
 
-    if (!template.isPublic && template.author?.id !== userId) {
+    if (!template.isPublic && template.authorId !== userId) {
       throw new ForbiddenException('Access denied');
     }
 
@@ -133,11 +127,11 @@ export class TemplatesService {
   }
 
   // Email template specific methods
-  async findEmailTemplate(name: string): Promise<TemplateWithRelations | null> {
+  async findEmailTemplate(name: string): Promise<TemplateWithAuthor | null> {
     return this.prisma.template.findFirst({
       where: {
         name,
-        type: { equals: 'EMAIL' },
+        type: 'EMAIL',
       },
       include: { author: true },
     });
