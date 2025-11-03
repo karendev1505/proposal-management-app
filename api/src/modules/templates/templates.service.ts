@@ -1,18 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
-import { Prisma, TemplateType as PrismaTemplateType } from '@prisma/client';
-import { CreateTemplateDto } from './dto/create-template.dto';
-import { UpdateTemplateDto } from './dto/update-template.dto';
-import { QueryTemplateDto } from './dto/query-template.dto';
-
-type TemplateWithRelations = Prisma.TemplateGetPayload<{
-  include: { author: true };
-}>;
-
-@Injectable()
-export class TemplatesService {
-  constructor(private prisma: PrismaService) {}table, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../../prisma.service';
 import { Prisma, TemplateType } from '@prisma/client';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
@@ -26,7 +13,7 @@ type TemplateWithRelations = Prisma.TemplateGetPayload<{
 export class TemplatesService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(query: QueryTemplateDto, userId?: string) {
+  async findAll(query: QueryTemplateDto, userId: string) {
     const { type, search, page = 1, limit = 10 } = query;
     const skip = (page - 1) * limit;
 
@@ -41,14 +28,19 @@ export class TemplatesService {
         {
           OR: [
             { isPublic: true },
-            { author: { id: userId } },
+            { authorId: userId },
           ],
         },
       ],
     };
 
     if (type) {
-      where.type = type as Prisma.EnumTemplateTypeFilter;
+      const normalized = type.toUpperCase() as keyof typeof TemplateType;
+      if (TemplateType[normalized] === undefined) {
+        // ignore invalid type filter
+      } else {
+        where.type = TemplateType[normalized] as unknown as Prisma.EnumTemplateTypeFilter;
+      }
     }
 
     const [templates, total] = await Promise.all([
@@ -73,7 +65,7 @@ export class TemplatesService {
     };
   }
 
-  async findOne(id: string, userId?: string): Promise<TemplateWithRelations> {
+  async findOne(id: string, userId: string): Promise<TemplateWithRelations> {
     const template = await this.prisma.template.findUnique({
       where: { id },
       include: { author: true },
@@ -92,13 +84,13 @@ export class TemplatesService {
 
   async create(data: CreateTemplateDto, userId: string): Promise<TemplateWithRelations> {
     const { type, ...rest } = data;
+    const normalized = (type || 'PROPOSAL').toUpperCase() as keyof typeof TemplateType;
+    const enumType = TemplateType[normalized] ?? TemplateType.PROPOSAL;
     return this.prisma.template.create({
       data: {
         ...rest,
-        type: type.toUpperCase() as Prisma.EnumTemplateTypeFieldUpdateOperationsInput["set"],
-        author: {
-          connect: { id: userId }
-        }
+        type: enumType,
+        author: { connect: { id: userId } },
       },
       include: { author: true },
     });
@@ -111,9 +103,18 @@ export class TemplatesService {
       throw new ForbiddenException('Access denied');
     }
 
+    const { type, ...rest } = data as any;
+    let updateData: Prisma.TemplateUpdateInput = { ...rest };
+    if (typeof type === 'string' && type.length > 0) {
+      const normalized = type.toUpperCase() as keyof typeof TemplateType;
+      if (TemplateType[normalized] !== undefined) {
+        updateData.type = TemplateType[normalized];
+      }
+    }
+
     return this.prisma.template.update({
       where: { id },
-      data,
+      data: updateData,
       include: { author: true },
     });
   }
@@ -137,7 +138,7 @@ export class TemplatesService {
     return this.prisma.template.findFirst({
       where: {
         name,
-        type: { equals: 'EMAIL' },
+        type: TemplateType.EMAIL,
       },
       include: { author: true },
     });

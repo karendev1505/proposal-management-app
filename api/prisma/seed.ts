@@ -35,15 +35,47 @@ async function main() {
   });
 
   // Create sample template
-  const template = await prisma.template.upsert({
-    where: { id: 'template-1' },
+  const proposalTemplate = await prisma.template.upsert({
+    where: { id: 'template-proposal-default' },
     update: {},
     create: {
-      id: 'template-1',
-      name: 'Business Proposal Template',
-      content: 'This is a sample business proposal template...',
-      category: 'Business',
+      id: 'template-proposal-default',
+      name: 'Default Proposal Template',
+      type: 'PROPOSAL',
+      content: '<h1>{{title}}</h1>\n<p>{{content}}</p>',
+      category: 'Default',
       isPublic: true,
+      authorId: admin.id,
+    },
+  });
+
+  const emailProposalSent = await prisma.template.upsert({
+    where: { id: 'template-email-proposal-sent' },
+    update: {},
+    create: {
+      id: 'template-email-proposal-sent',
+      name: 'proposal-sent',
+      type: 'EMAIL',
+      subject: 'New Proposal Sent',
+      content: '<h1>Proposal Sent</h1>\n<p>Hi {{recipientName}}, your proposal "{{proposalTitle}}" was sent.</p>',
+      category: 'system',
+      isPublic: true,
+      authorId: admin.id,
+    },
+  });
+
+  const emailThankYou = await prisma.template.upsert({
+    where: { id: 'template-email-thank-you' },
+    update: {},
+    create: {
+      id: 'template-email-thank-you',
+      name: 'thank-you',
+      type: 'EMAIL',
+      subject: 'Thank You',
+      content: '<h1>Thank you, {{name}}!</h1>\n<p>We appreciate you using our service.</p>',
+      category: 'system',
+      isPublic: true,
+      authorId: admin.id,
     },
   });
 
@@ -57,14 +89,15 @@ async function main() {
       content: 'This is a sample proposal content...',
       status: 'DRAFT',
       authorId: user.id,
-      templateId: template.id,
+      templateId: proposalTemplate.id,
     },
   });
 
   console.log('✅ Database seeded successfully!');
   console.log('👤 Admin user:', admin.email);
   console.log('👤 Test user:', user.email);
-  console.log('📄 Template:', template.name);
+  console.log('📄 Proposal Template:', proposalTemplate.name);
+  console.log('✉️ Email Templates:', emailProposalSent.name, ',', emailThankYou.name);
   console.log('📋 Proposal:', proposal.title);
 }
 

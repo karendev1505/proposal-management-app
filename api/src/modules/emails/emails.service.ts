@@ -5,10 +5,11 @@ import * as nodemailer from 'nodemailer';
 import * as handlebars from 'handlebars';
 import * as fs from 'fs';
 import * as path from 'path';
+import { TemplatesService } from '../templates/templates.service';
 
 export interface EmailTemplate {
   to: string;
-  subject: string;
+  subject?: string;
   template: string;
   data?: Record<string, any>;
 }
@@ -33,7 +34,7 @@ export class EmailsService {
   private transporter: nodemailer.Transporter;
   private isSendGridConfigured = false;
 
-  constructor(private configService: ConfigService) {
+  constructor(private configService: ConfigService, private readonly templatesService: TemplatesService) {
     this.initializeEmailProviders();
   }
 
@@ -145,10 +146,20 @@ export class EmailsService {
   async sendTemplateEmail(template: EmailTemplate): Promise<boolean> {
     try {
       const html = await this.renderTemplate(template.template, template.data || {});
+      let subject = template.subject;
+      if (!subject) {
+        // Try to read subject from DB template if present
+        try {
+          const dbTpl = await this.templatesService.findEmailTemplate(template.template);
+          if (dbTpl?.subject) subject = dbTpl.subject;
+        } catch (e) {
+          // ignore
+        }
+      }
       
       return await this.sendEmail({
         to: template.to,
-        subject: template.subject,
+        subject,
         html,
       });
     } catch (error) {
@@ -157,12 +168,24 @@ export class EmailsService {
     }
   }
 
-  private async renderTemplate(templateName: string, data: Record<string, any>): Promise<string> {
+  public async renderTemplate(templateName: string, data: Record<string, any>): Promise<string> {
+    // Try DB first
+    try {
+      const dbTemplate = await this.templatesService.findEmailTemplate(templateName);
+      if (dbTemplate?.content) {
+        const compiled = handlebars.compile(dbTemplate.content);
+        return compiled(data);
+      }
+    } catch (e) {
+      // ignore and fallback to filesystem
+    }
+
+    // Fallback to filesystem .hbs
     try {
       const templatePath = path.join(__dirname, 'templates', `${templateName}.hbs`);
       const templateSource = fs.readFileSync(templatePath, 'utf8');
-      const template = handlebars.compile(templateSource);
-      return template(data);
+      const compiled = handlebars.compile(templateSource);
+      return compiled(data);
     } catch (error) {
       this.logger.error(`Failed to render template ${templateName}:`, error);
       throw error;

@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { EmailsService } from './emails.service';
+import { TemplatesModule } from '../templates/templates.module';
 
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, TemplatesModule],
   providers: [EmailsService],
   exports: [EmailsService],
 })

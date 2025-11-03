@@ -1,33 +1,22 @@
-import { IsString, IsOptional, IsEnum } from 'class-validator';
-
-export enum ProposalStatus {
-  DRAFT = 'DRAFT',
-  SENT = 'SENT',
-  VIEWED = 'VIEWED',
-  SIGNED = 'SIGNED',
-  REJECTED = 'REJECTED',
-}
+import { IsString, IsOptional, IsEmail } from 'class-validator';
 
 export class CreateProposalDto {
-  @IsString()
+  @IsString({ message: 'Invalid proposal title' })
   title: string;
 
-  @IsString()
-  content: string;
-
-  @IsString()
   @IsOptional()
+  @IsString({ message: 'Invalid proposal content' })
+  content?: string;
+
+  @IsOptional()
+  @IsEmail({}, { message: 'Invalid client email' })
   clientEmail?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString({ message: 'Invalid client name' })
   clientName?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString({ message: 'Invalid template id' })
   templateId?: string;
-
-  @IsEnum(ProposalStatus)
-  @IsOptional()
-  status?: ProposalStatus;
 }

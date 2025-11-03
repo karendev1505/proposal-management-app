@@ -4,29 +4,29 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateTemplateDto {
   @ApiProperty()
-  @IsString()
+  @IsString({ message: 'Invalid template name' })
   name: string;
 
   @ApiProperty()
-  @IsString()
+  @IsString({ message: 'Invalid template type' })
   type: string;
 
   @ApiProperty()
-  @IsString()
+  @IsString({ message: 'Invalid template content' })
   content: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Invalid template subject' })
   subject?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Invalid template category' })
   category?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsBoolean()
+  @IsBoolean({ message: 'Invalid template visibility' })
   isPublic?: boolean;
 }
