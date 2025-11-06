@@ -1,32 +1,32 @@
 import { IsString, IsOptional, IsBoolean } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-// removed invalid import from @prisma/client; `type` will be a plain string
+import { TemplateType } from '@prisma/client';
 
 export class CreateTemplateDto {
   @ApiProperty()
-  @IsString({ message: 'Invalid template name' })
+  @IsString()
   name: string;
 
   @ApiProperty()
-  @IsString({ message: 'Invalid template type' })
-  type: string;
+  @IsString()
+  type: TemplateType;
 
   @ApiProperty()
-  @IsString({ message: 'Invalid template content' })
+  @IsString()
   content: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString({ message: 'Invalid template subject' })
+  @IsString()
   subject?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString({ message: 'Invalid template category' })
+  @IsString()
   category?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsBoolean({ message: 'Invalid template visibility' })
+  @IsBoolean()
   isPublic?: boolean;
 }

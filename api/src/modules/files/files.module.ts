@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { FilesService } from './files.service';
-import { PrismaService } from '../../prisma.service';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  providers: [FilesService, PrismaService],
+  imports: [ConfigModule],
+  providers: [FilesService],
   exports: [FilesService],
 })
 export class FilesModule {}

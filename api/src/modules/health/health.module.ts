@@ -3,8 +3,8 @@ import { TerminusModule } from '@nestjs/terminus';
 import { JwtModule } from '@nestjs/jwt';
 import { HealthController } from './health.controller';
 import { PrismaService } from '../../prisma.service';
-import { EmailsModule } from '../emails/emails.module';
-import { AuthModule } from '../auth/auth.module';
+import { EmailsService } from '../emails/emails.service';
+import { AuthService } from '../auth/auth.service';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
@@ -17,10 +17,8 @@ import { ConfigModule } from '@nestjs/config';
       },
     }),
     ConfigModule,
-    EmailsModule,
-    AuthModule,
   ],
   controllers: [HealthController],
-  providers: [PrismaService],
+  providers: [PrismaService, EmailsService, AuthService],
 })
 export class HealthModule {}

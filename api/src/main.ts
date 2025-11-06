@@ -38,6 +38,14 @@ async function bootstrap() {
     });
 
     const port = process.env.PORT || 3001;
+    // Serve uploaded files in local mode
+    const storageDriver = process.env.STORAGE_DRIVER || 'local';
+    if (storageDriver === 'local') {
+      const express = app.getHttpAdapter().getInstance();
+      const uploadsPath = require('path').join(process.cwd(), 'api', 'uploads');
+      express.use('/uploads', require('express').static(uploadsPath));
+      logger.log(`Serving /uploads from ${uploadsPath}`);
+    }
     await app.listen(port);
     
     logger.log(`🚀 API Server running on port ${port}`);

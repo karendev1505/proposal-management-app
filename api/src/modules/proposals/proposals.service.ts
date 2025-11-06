@@ -108,9 +108,9 @@ export class ProposalsService {
     if (!body.recipientEmail) throw new BadRequestException('Recipient email required');
 
     // Generate PDF from proposal content
-    const pdfBuffer = await this.pdfService.generateFromHtml(proposal.content);
-    const filename = `proposal-${proposal.id}.pdf`;
-    const saved = await this.filesService.saveBuffer(pdfBuffer, filename, 'application/pdf');
+  const pdfBuffer: Buffer = await this.pdfService.generateFromHtml(proposal.content);
+  const filename = `proposal-${proposal.id}.pdf`;
+  const saved = await this.filesService.saveBuffer(pdfBuffer, filename, 'application/pdf');
 
     const publicToken = uuidv4();
     await this.prisma.proposal.update({
@@ -119,7 +119,7 @@ export class ProposalsService {
     });
 
     // Render email HTML and send with attachment
-    const html = await this.emailsService.renderTemplate('proposal-sent', {
+  const html = await this.emailsService.renderTemplate('proposal-sent', {
       proposalTitle: proposal.title,
       recipientName: body.recipientName || body.recipientEmail,
       link: `${process.env.PUBLIC_APP_URL || 'http://localhost:3000'}/proposals/public/${publicToken}`,
@@ -157,15 +157,15 @@ export class ProposalsService {
   async signByToken(token: string, signatureBase64: string) {
     const proposal = await this.prisma.proposal.findFirst({ where: { publicToken: token } });
     if (!proposal) throw new NotFoundException('Proposal not found');
-    const sigBuf = Buffer.from(signatureBase64.replace(/^data:image\/[a-zA-Z]+;base64,/, ''), 'base64');
-    const filename = `signature-${proposal.id}.png`;
-    await this.filesService.saveBuffer(sigBuf, filename, 'image/png');
-    await this.prisma.proposal.update({ where: { id: proposal.id }, data: { signedAt: new Date(), status: ProposalStatus.SIGNED } });
+  const sigBuf = Buffer.from(signatureBase64.replace(/^data:image\/[a-zA-Z]+;base64,/, ''), 'base64');
+  const filename = `signature-${proposal.id}.png`;
+  const savedSig = await this.filesService.saveBuffer(sigBuf, filename, 'image/png');
+  await this.prisma.proposal.update({ where: { id: proposal.id }, data: { signedAt: new Date(), status: ProposalStatus.SIGNED } });
     await this.prisma.proposalEvent.create({ data: { proposalId: proposal.id, type: 'SIGNED' } });
 
     // Thank-you email if available
     if (proposal['clientEmail']) {
-      await this.emailsService.sendTemplateEmail({ to: proposal['clientEmail'], template: 'thank-you' });
+      await this.emailsService.sendTemplateEmail({ to: proposal['clientEmail'], subject: 'Thank you', template: 'thank-you' });
     }
     return { message: 'Proposal signed' };
   }

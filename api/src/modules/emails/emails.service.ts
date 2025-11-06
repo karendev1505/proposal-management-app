@@ -1,15 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../../prisma.service';
 import * as sgMail from '@sendgrid/mail';
 import * as nodemailer from 'nodemailer';
 import * as handlebars from 'handlebars';
 import * as fs from 'fs';
 import * as path from 'path';
-import { TemplatesService } from '../templates/templates.service';
 
 export interface EmailTemplate {
   to: string;
-  subject?: string;
+  subject: string;
   template: string;
   data?: Record<string, any>;
 }
@@ -34,7 +34,7 @@ export class EmailsService {
   private transporter: nodemailer.Transporter;
   private isSendGridConfigured = false;
 
-  constructor(private configService: ConfigService, private readonly templatesService: TemplatesService) {
+  constructor(private configService: ConfigService, private prisma: PrismaService) {
     this.initializeEmailProviders();
   }
 
@@ -146,46 +146,48 @@ export class EmailsService {
   async sendTemplateEmail(template: EmailTemplate): Promise<boolean> {
     try {
       const html = await this.renderTemplate(template.template, template.data || {});
-      let subject = template.subject;
-      if (!subject) {
-        // Try to read subject from DB template if present
-        try {
-          const dbTpl = await this.templatesService.findEmailTemplate(template.template);
-          if (dbTpl?.subject) subject = dbTpl.subject;
-        } catch (e) {
-          // ignore
-        }
-      }
       
-      return await this.sendEmail({
+      const sent = await this.sendEmail({
         to: template.to,
-        subject,
+        subject: template.subject,
         html,
       });
+
+      if (sent) {
+        // log email
+        try {
+          await (this.prisma as any).emailLog.create({
+            data: {
+              to: Array.isArray(template.to) ? (template.to as string[]).join(',') : template.to,
+              subject: template.subject,
+              template: template.template,
+              proposalId: template.data?.proposalId ?? null,
+              html,
+            },
+          });
+        } catch (err) {
+          this.logger.error('Failed to write email log', err);
+        }
+      }
+
+      return sent;
     } catch (error) {
       this.logger.error('Failed to send template email:', error);
       return false;
     }
   }
 
-  public async renderTemplate(templateName: string, data: Record<string, any>): Promise<string> {
-    // Try DB first
-    try {
-      const dbTemplate = await this.templatesService.findEmailTemplate(templateName);
-      if (dbTemplate?.content) {
-        const compiled = handlebars.compile(dbTemplate.content);
-        return compiled(data);
-      }
-    } catch (e) {
-      // ignore and fallback to filesystem
-    }
+  async getLogs(proposalId?: string) {
+    const where = proposalId ? { proposalId } : {};
+  return (this.prisma as any).emailLog.findMany({ where, orderBy: { sentAt: 'desc' } });
+  }
 
-    // Fallback to filesystem .hbs
+  async renderTemplate(templateName: string, data: Record<string, any>): Promise<string> {
     try {
       const templatePath = path.join(__dirname, 'templates', `${templateName}.hbs`);
       const templateSource = fs.readFileSync(templatePath, 'utf8');
-      const compiled = handlebars.compile(templateSource);
-      return compiled(data);
+      const template = handlebars.compile(templateSource);
+      return template(data);
     } catch (error) {
       this.logger.error(`Failed to render template ${templateName}:`, error);
       throw error;

@@ -52,14 +52,12 @@ model Proposal {
   title     String
   content   String
   status    ProposalStatus @default(DRAFT)
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
   pdfUrl    String?
   publicToken String?
   viewedAt  DateTime?
   signedAt  DateTime?
-  clientEmail String?
-  clientName  String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   // Relations
   authorId   String
@@ -70,7 +68,6 @@ model Proposal {
   events     ProposalEvent[]
 
   @@map("proposals")
-  @@index([status])
 }
 
 enum TemplateType {
@@ -133,26 +130,36 @@ model Notification {
   @@map("notifications")
 }
 
+model EmailLog {
+  id         String   @id @default(uuid())
+  to         String
+  subject    String
+  template   String
+  //sentAt     DateTime @default(now())
+  proposalId String?
+  html       String
+  sentAt     DateTime @default(now())
+  createdAt  DateTime @default(now())
+  @@map("email_logs")
+}
+
 enum ProposalStatus {
   DRAFT
   PENDING
-  SENT
-  VIEWED
   APPROVED
   REJECTED
+  SENT
   SIGNED
 }
 
 model ProposalEvent {
-  id         String   @id @default(cuid())
+  id         String   @id @default(uuid())
+  proposalId String
   type       String
   createdAt  DateTime @default(now())
 
-  // Relations
-  proposalId String
   proposal   Proposal @relation(fields: [proposalId], references: [id])
 
-  @@index([proposalId])
   @@map("proposal_events")
 }
 
