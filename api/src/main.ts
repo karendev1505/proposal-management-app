@@ -30,6 +30,7 @@ async function bootstrap() {
         'http://localhost:3001', 
         'http://localhost:3002',
         'http://localhost:3003',
+        'https://proposal-management-app-web.vercel.app',
         process.env.CORS_ORIGIN || 'http://localhost:3000'
       ],
       credentials: true,
