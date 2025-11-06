@@ -1,18 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { mockTemplates } from '@/lib/mock-data';
-import { CreateProposalData } from '@/types/proposal';
+import { getProposalById, mockTemplates } from '@/lib/mock-data';
+import { Proposal, UpdateProposalData } from '@/types/proposal';
 
-export default function NewProposalPage() {
+export default function EditProposalPage() {
+  const params = useParams();
   const router = useRouter();
-  const [formData, setFormData] = useState<CreateProposalData>({
+  const [proposal, setProposal] = useState<Proposal | null>(null);
+  const [formData, setFormData] = useState<UpdateProposalData>({
     title: '',
     content: '',
     clientEmail: '',
@@ -20,8 +22,26 @@ export default function NewProposalPage() {
     templateId: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleInputChange = (field: keyof CreateProposalData, value: string) => {
+  useEffect(() => {
+    if (params.id) {
+      const foundProposal = getProposalById(params.id as string);
+      if (foundProposal) {
+        setProposal(foundProposal);
+        setFormData({
+          title: foundProposal.title,
+          content: foundProposal.content || '',
+          clientEmail: foundProposal.clientEmail || '',
+          clientName: foundProposal.clientName || '',
+          templateId: foundProposal.templateId || '',
+        });
+      }
+      setIsLoading(false);
+    }
+  }, [params.id]);
+
+  const handleInputChange = (field: keyof UpdateProposalData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -43,24 +63,54 @@ export default function NewProposalPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // In a real app, you would make an API call here
-      console.log('Creating proposal:', formData);
+      console.log('Updating proposal:', { id: params.id, ...formData });
       
-      // Redirect to proposals list
-      router.push('/proposals');
+      // Redirect to proposal view
+      router.push(`/proposals/view/${params.id}`);
     } catch (error) {
-      console.error('Error creating proposal:', error);
+      console.error('Error updating proposal:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading proposal...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!proposal) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-2">Proposal Not Found</h2>
+          <p className="text-gray-600 mb-4">The proposal you're trying to edit doesn't exist.</p>
+          <Link href="/proposals">
+            <Button>Back to Proposals</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Create New Proposal</h1>
-        <Link href="/proposals">
-          <Button variant="outline">Back to Proposals</Button>
-        </Link>
+        <h1 className="text-3xl font-bold">Edit Proposal</h1>
+        <div className="flex gap-2">
+          <Link href={`/proposals/view/${proposal.id}`}>
+            <Button variant="outline">View Proposal</Button>
+          </Link>
+          <Link href="/proposals">
+            <Button variant="outline">Back to Proposals</Button>
+          </Link>
+        </div>
       </div>
 
       <Card>
@@ -128,7 +178,7 @@ export default function NewProposalPage() {
                 ))}
               </Select>
               <p className="text-sm text-gray-600 mt-1">
-                Selecting a template will populate the content field below
+                Selecting a template will replace the current content
               </p>
             </div>
 
@@ -140,7 +190,7 @@ export default function NewProposalPage() {
                 id="content"
                 value={formData.content}
                 onChange={(e) => handleInputChange('content', e.target.value)}
-                placeholder="Enter proposal content or select a template above"
+                placeholder="Enter proposal content"
                 rows={12}
                 className="flex w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-y"
               />
@@ -155,9 +205,9 @@ export default function NewProposalPage() {
                 disabled={!formData.title || isSubmitting}
                 className="flex-1"
               >
-                {isSubmitting ? 'Creating...' : 'Create Proposal'}
+                {isSubmitting ? 'Updating...' : 'Update Proposal'}
               </Button>
-              <Link href="/proposals" className="flex-1">
+              <Link href={`/proposals/view/${proposal.id}`} className="flex-1">
                 <Button type="button" variant="outline" className="w-full">
                   Cancel
                 </Button>
