@@ -25,11 +25,21 @@ describe('AuthService', () => {
   };
 
   const mockJwtService = {
-    signAsync: jest.fn(),
+    signAsync: jest.fn().mockResolvedValue('mock-token'),
+    sign: jest.fn().mockReturnValue('mock-token'),
+    verify: jest.fn(),
   };
 
   const mockConfigService = {
-    get: jest.fn(),
+    get: jest.fn().mockImplementation((key: string) => {
+      const config = {
+        JWT_SECRET: 'test-secret',
+        JWT_EXPIRATION_TIME: '15m',
+        JWT_REFRESH_SECRET: 'test-refresh-secret',
+        JWT_REFRESH_EXPIRES_IN: '7d',
+      };
+      return config[key];
+    }),
   };
 
   beforeEach(async () => {
@@ -83,8 +93,8 @@ describe('AuthService', () => {
 
       expect(result).toBeDefined();
       expect(result).toEqual<AuthResponse>({
-        accessToken: expect.any(String),
-        refreshToken: expect.any(String),
+        accessToken: 'mock-token',
+        refreshToken: 'mock-token',
         user: {
           id: '1',
           email: registerDto.email,
@@ -97,14 +107,6 @@ describe('AuthService', () => {
           email: registerDto.email,
           name: registerDto.name,
           password: hashedPassword,
-        },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          isEmailVerified: true,
-          createdAt: true,
         },
       });
     });
