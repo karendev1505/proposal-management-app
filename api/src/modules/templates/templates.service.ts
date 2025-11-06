@@ -1,13 +1,17 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
-import { Prisma, TemplateType } from '@prisma/client';
+import { Prisma, TemplateType, Template } from '@prisma/client';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
 import { QueryTemplateDto } from './dto/query-template.dto';
 
-type TemplateWithRelations = Prisma.TemplateGetPayload<{
-  include: { author: true };
-}>;
+type TemplateWithRelations = Template & {
+  author: {
+    id: string;
+    name: string | null;
+    email: string;
+  } | null;
+};
 
 @Injectable()
 export class TemplatesService {
@@ -35,7 +39,7 @@ export class TemplatesService {
     };
 
     if (type) {
-      where.type = type as Prisma.EnumTemplateTypeFilter;
+      where.type = type as TemplateType;
     }
 
     const [templates, total] = await Promise.all([
@@ -81,7 +85,7 @@ export class TemplatesService {
     return this.prisma.template.create({
       data: {
         name: data.name,
-  type: (data.type as unknown) as TemplateType,
+        type: data.type as TemplateType,
         content: data.content,
         subject: data.subject,
         category: data.category,
@@ -100,7 +104,7 @@ export class TemplatesService {
     }
 
     const updateData: any = { ...data };
-  if (updateData.type) updateData.type = updateData.type as TemplateType;
+    if (updateData.type) updateData.type = updateData.type as TemplateType;
 
     return this.prisma.template.update({
       where: { id },
@@ -128,7 +132,7 @@ export class TemplatesService {
     return this.prisma.template.findFirst({
       where: {
         name,
-        type: { equals: 'EMAIL' },
+        type: TemplateType.EMAIL,
       },
       include: { author: true },
     });
