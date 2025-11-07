@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { getProposalStats, mockProposals, mockTemplates } from '@/lib/mock-data';
+import { getProposalStats, getEmailStats, getNotificationStats, mockProposals, mockTemplates } from '@/lib/mock-data';
 import { ProposalStatus } from '@/types/proposal';
 
 const statusVariants = {
@@ -20,7 +20,9 @@ const statusVariants = {
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const stats = useMemo(() => getProposalStats(), []);
+  const proposalStats = useMemo(() => getProposalStats(), []);
+  const emailStats = useMemo(() => getEmailStats(), []);
+  const notificationStats = useMemo(() => getNotificationStats(), []);
   
   const recentProposals = useMemo(() => {
     return mockProposals
@@ -55,32 +57,46 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-sm text-gray-600">Total Proposals</p>
+            <div className="text-2xl font-bold">{proposalStats.total}</div>
+            <p className="text-sm text-gray-600">Proposals</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">{stats.signed}</div>
+            <div className="text-2xl font-bold text-green-600">{proposalStats.signed}</div>
             <p className="text-sm text-gray-600">Signed</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">{stats.sent + stats.viewed}</div>
-            <p className="text-sm text-gray-600">Active</p>
+            <div className="text-2xl font-bold text-blue-600">{emailStats.total}</div>
+            <p className="text-sm text-gray-600">Emails</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-purple-600">{stats.conversionRate}%</div>
-            <p className="text-sm text-gray-600">Conversion Rate</p>
+            <div className="text-2xl font-bold text-orange-600">{emailStats.openRate}%</div>
+            <p className="text-sm text-gray-600">Open Rate</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-red-600">{notificationStats.unread}</div>
+            <p className="text-sm text-gray-600">Unread</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-purple-600">{proposalStats.conversionRate}%</div>
+            <p className="text-sm text-gray-600">Conversion</p>
           </CardContent>
         </Card>
       </div>
@@ -151,10 +167,10 @@ export default function DashboardPage() {
                 <Button variant="outline" className="w-full">Create Template</Button>
               </Link>
               <Link href="/proposals?status=DRAFT">
-                <Button variant="outline" className="w-full">View Drafts ({stats.draft})</Button>
+                <Button variant="outline" className="w-full">View Drafts ({proposalStats.draft})</Button>
               </Link>
               <Link href="/proposals?status=SENT">
-                <Button variant="outline" className="w-full">View Sent ({stats.sent})</Button>
+                <Button variant="outline" className="w-full">View Sent ({proposalStats.sent})</Button>
               </Link>
             </CardContent>
           </Card>
