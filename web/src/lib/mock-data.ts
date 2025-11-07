@@ -1,5 +1,7 @@
 import { Proposal, ProposalStatus, CreateProposalData, UpdateProposalData } from '@/types/proposal';
 import { Template, CreateTemplateData, UpdateTemplateData } from '@/types/template';
+import { Email, EmailStatus, EmailType, EmailStats } from '@/types/email';
+import { Notification, NotificationType, NotificationCategory, NotificationStats } from '@/types/notification';
 
 export const mockTemplates: Template[] = [
   {
@@ -448,4 +450,287 @@ export const getProposalStats = () => {
     expired,
     conversionRate: total > 0 ? Math.round((signed / total) * 100) : 0,
   };
+};
+
+// Mock Emails Data
+export const mockEmails: Email[] = [
+  {
+    id: '1',
+    subject: 'New Proposal: Website Development Project',
+    content: 'Dear John, Please find attached our proposal for your website development project...',
+    htmlContent: '<p>Dear John,</p><p>Please find attached our proposal for your website development project...</p>',
+    recipientEmail: 'john@techcorp.com',
+    recipientName: 'John Smith',
+    senderEmail: 'demo@example.com',
+    senderName: 'Demo User',
+    type: EmailType.PROPOSAL,
+    status: EmailStatus.OPENED,
+    proposalId: '1',
+    sentAt: '2024-11-06T10:30:00Z',
+    deliveredAt: '2024-11-06T10:31:00Z',
+    openedAt: '2024-11-06T14:15:00Z',
+    createdAt: '2024-11-06T10:25:00Z',
+    updatedAt: '2024-11-06T14:15:00Z',
+    userId: 'user1',
+  },
+  {
+    id: '2',
+    subject: 'Reminder: Proposal Review Pending',
+    content: 'Hi Sarah, This is a friendly reminder that your proposal is still pending review...',
+    recipientEmail: 'sarah@designstudio.com',
+    recipientName: 'Sarah Johnson',
+    senderEmail: 'demo@example.com',
+    senderName: 'Demo User',
+    type: EmailType.REMINDER,
+    status: EmailStatus.DELIVERED,
+    proposalId: '2',
+    sentAt: '2024-11-06T09:00:00Z',
+    deliveredAt: '2024-11-06T09:01:00Z',
+    createdAt: '2024-11-06T08:55:00Z',
+    updatedAt: '2024-11-06T09:01:00Z',
+    userId: 'user1',
+  },
+  {
+    id: '3',
+    subject: 'Thank you for signing the proposal!',
+    content: 'Dear Mike, Thank you for signing our proposal. We are excited to work with you...',
+    recipientEmail: 'mike@startup.io',
+    recipientName: 'Mike Wilson',
+    senderEmail: 'demo@example.com',
+    senderName: 'Demo User',
+    type: EmailType.NOTIFICATION,
+    status: EmailStatus.SENT,
+    proposalId: '3',
+    sentAt: '2024-11-05T16:45:00Z',
+    createdAt: '2024-11-05T16:40:00Z',
+    updatedAt: '2024-11-05T16:45:00Z',
+    userId: 'user1',
+  },
+  {
+    id: '4',
+    subject: 'Custom Marketing Campaign Proposal',
+    content: 'Hello Lisa, We have prepared a custom marketing campaign proposal for your review...',
+    recipientEmail: 'lisa@retailco.com',
+    recipientName: 'Lisa Brown',
+    senderEmail: 'demo@example.com',
+    senderName: 'Demo User',
+    type: EmailType.CUSTOM,
+    status: EmailStatus.FAILED,
+    createdAt: '2024-11-05T11:20:00Z',
+    updatedAt: '2024-11-05T11:25:00Z',
+    userId: 'user1',
+  },
+];
+
+// Mock Notifications Data
+export const mockNotifications: Notification[] = [
+  {
+    id: '1',
+    title: 'Proposal Signed',
+    message: 'John Smith has signed the Website Development proposal',
+    type: NotificationType.SUCCESS,
+    category: NotificationCategory.PROPOSAL,
+    read: false,
+    actionUrl: '/proposals/view/1',
+    actionText: 'View Proposal',
+    metadata: { proposalId: '1', clientName: 'John Smith' },
+    createdAt: '2024-11-06T14:15:00Z',
+    updatedAt: '2024-11-06T14:15:00Z',
+    userId: 'user1',
+  },
+  {
+    id: '2',
+    title: 'Email Delivered',
+    message: 'Your proposal email to Sarah Johnson was successfully delivered',
+    type: NotificationType.INFO,
+    category: NotificationCategory.EMAIL,
+    read: false,
+    actionUrl: '/emails/2',
+    actionText: 'View Email',
+    metadata: { emailId: '2', recipientEmail: 'sarah@designstudio.com' },
+    createdAt: '2024-11-06T09:01:00Z',
+    updatedAt: '2024-11-06T09:01:00Z',
+    userId: 'user1',
+  },
+  {
+    id: '3',
+    title: 'Email Failed to Send',
+    message: 'Failed to send email to lisa@retailco.com. Please check the email address.',
+    type: NotificationType.ERROR,
+    category: NotificationCategory.EMAIL,
+    read: true,
+    actionUrl: '/emails/4',
+    actionText: 'Retry Send',
+    metadata: { emailId: '4', error: 'Invalid email address' },
+    createdAt: '2024-11-05T11:25:00Z',
+    updatedAt: '2024-11-06T08:00:00Z',
+    userId: 'user1',
+  },
+  {
+    id: '4',
+    title: 'System Maintenance',
+    message: 'Scheduled system maintenance will occur tonight from 2:00 AM to 4:00 AM',
+    type: NotificationType.WARNING,
+    category: NotificationCategory.SYSTEM,
+    read: true,
+    createdAt: '2024-11-05T10:00:00Z',
+    updatedAt: '2024-11-05T12:30:00Z',
+    userId: 'user1',
+  },
+  {
+    id: '5',
+    title: 'Proposal Reminder',
+    message: 'Don\'t forget to follow up on the Mobile App proposal sent 3 days ago',
+    type: NotificationType.INFO,
+    category: NotificationCategory.REMINDER,
+    read: false,
+    actionUrl: '/proposals/view/2',
+    actionText: 'Send Reminder',
+    metadata: { proposalId: '2', daysSince: 3 },
+    createdAt: '2024-11-06T08:00:00Z',
+    updatedAt: '2024-11-06T08:00:00Z',
+    userId: 'user1',
+  },
+];
+
+// Email utility functions
+export const getEmails = (filters: any = {}) => {
+  let filteredEmails = [...mockEmails];
+  
+  if (filters.status) {
+    filteredEmails = filteredEmails.filter(email => email.status === filters.status);
+  }
+  
+  if (filters.type) {
+    filteredEmails = filteredEmails.filter(email => email.type === filters.type);
+  }
+  
+  if (filters.search) {
+    const searchLower = filters.search.toLowerCase();
+    filteredEmails = filteredEmails.filter(email => 
+      email.subject.toLowerCase().includes(searchLower) ||
+      email.recipientEmail.toLowerCase().includes(searchLower) ||
+      email.recipientName?.toLowerCase().includes(searchLower)
+    );
+  }
+  
+  const page = filters.page || 1;
+  const limit = filters.limit || 10;
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  
+  return {
+    emails: filteredEmails.slice(startIndex, endIndex),
+    total: filteredEmails.length,
+    page,
+    limit,
+    totalPages: Math.ceil(filteredEmails.length / limit),
+  };
+};
+
+export const getEmailById = (id: string) => {
+  return mockEmails.find(email => email.id === id);
+};
+
+export const getEmailStats = (): EmailStats => {
+  const total = mockEmails.length;
+  const sent = mockEmails.filter(e => e.status === EmailStatus.SENT || e.status === EmailStatus.DELIVERED || e.status === EmailStatus.OPENED).length;
+  const delivered = mockEmails.filter(e => e.status === EmailStatus.DELIVERED || e.status === EmailStatus.OPENED).length;
+  const opened = mockEmails.filter(e => e.status === EmailStatus.OPENED).length;
+  const failed = mockEmails.filter(e => e.status === EmailStatus.FAILED).length;
+  
+  return {
+    total,
+    sent,
+    delivered,
+    opened,
+    failed,
+    openRate: delivered > 0 ? Math.round((opened / delivered) * 100) : 0,
+    deliveryRate: sent > 0 ? Math.round((delivered / sent) * 100) : 0,
+  };
+};
+
+// Notification utility functions
+export const getNotifications = (filters: any = {}) => {
+  let filteredNotifications = [...mockNotifications];
+  
+  if (filters.type) {
+    filteredNotifications = filteredNotifications.filter(notification => notification.type === filters.type);
+  }
+  
+  if (filters.category) {
+    filteredNotifications = filteredNotifications.filter(notification => notification.category === filters.category);
+  }
+  
+  if (filters.read !== undefined) {
+    filteredNotifications = filteredNotifications.filter(notification => notification.read === filters.read);
+  }
+  
+  // Sort by creation date (newest first)
+  filteredNotifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  
+  const page = filters.page || 1;
+  const limit = filters.limit || 10;
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  
+  const unreadCount = mockNotifications.filter(n => !n.read).length;
+  
+  return {
+    notifications: filteredNotifications.slice(startIndex, endIndex),
+    total: filteredNotifications.length,
+    page,
+    limit,
+    totalPages: Math.ceil(filteredNotifications.length / limit),
+    unreadCount,
+  };
+};
+
+export const getNotificationById = (id: string) => {
+  return mockNotifications.find(notification => notification.id === id);
+};
+
+export const getNotificationStats = (): NotificationStats => {
+  const total = mockNotifications.length;
+  const unread = mockNotifications.filter(n => !n.read).length;
+  
+  const byType = {
+    [NotificationType.INFO]: mockNotifications.filter(n => n.type === NotificationType.INFO).length,
+    [NotificationType.SUCCESS]: mockNotifications.filter(n => n.type === NotificationType.SUCCESS).length,
+    [NotificationType.WARNING]: mockNotifications.filter(n => n.type === NotificationType.WARNING).length,
+    [NotificationType.ERROR]: mockNotifications.filter(n => n.type === NotificationType.ERROR).length,
+  };
+  
+  const byCategory = {
+    [NotificationCategory.PROPOSAL]: mockNotifications.filter(n => n.category === NotificationCategory.PROPOSAL).length,
+    [NotificationCategory.EMAIL]: mockNotifications.filter(n => n.category === NotificationCategory.EMAIL).length,
+    [NotificationCategory.SYSTEM]: mockNotifications.filter(n => n.category === NotificationCategory.SYSTEM).length,
+    [NotificationCategory.REMINDER]: mockNotifications.filter(n => n.category === NotificationCategory.REMINDER).length,
+  };
+  
+  return {
+    total,
+    unread,
+    byType,
+    byCategory,
+  };
+};
+
+export const markNotificationAsRead = (id: string) => {
+  const notification = mockNotifications.find(n => n.id === id);
+  if (notification) {
+    notification.read = true;
+    notification.updatedAt = new Date().toISOString();
+  }
+  return notification;
+};
+
+export const markAllNotificationsAsRead = () => {
+  mockNotifications.forEach(notification => {
+    if (!notification.read) {
+      notification.read = true;
+      notification.updatedAt = new Date().toISOString();
+    }
+  });
+  return mockNotifications;
 };
