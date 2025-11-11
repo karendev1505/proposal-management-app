@@ -79,6 +79,12 @@ class SubscriptionsAPI {
     const Cookies = (await import('js-cookie')).default;
     const token = Cookies.get('accessToken');
     
+    console.log('Subscriptions API request:', {
+      endpoint,
+      hasToken: !!token,
+      tokenPreview: token ? `${token.substring(0, 20)}...` : 'none'
+    });
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers: {
@@ -89,6 +95,11 @@ class SubscriptionsAPI {
     });
 
     if (!response.ok) {
+      console.error('Subscriptions API error:', {
+        status: response.status,
+        endpoint,
+        hasToken: !!token
+      });
       const error = await response.json().catch(() => ({ message: 'Request failed' }));
       throw new Error(error.message || `HTTP ${response.status}`);
     }

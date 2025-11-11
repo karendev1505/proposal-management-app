@@ -57,8 +57,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [profileError]);
 
   useEffect(() => {
+    console.log('Profile data changed:', { profileData, profileLoading, profileError });
     if (profileData?.user) {
       setUser(profileData.user);
+      console.log('User set:', profileData.user);
+    } else if (profileData && !profileData.user) {
+      // If we have data but no user property, maybe the response structure is different
+      setUser(profileData as any);
+      console.log('User set (direct):', profileData);
     }
     setIsLoading(profileLoading);
   }, [profileData, profileLoading]);
@@ -67,9 +73,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     mutationFn: ({ email, password }: { email: string; password: string }) =>
       authApi.login(email, password),
     onSuccess: (data) => {
+      console.log('Login successful:', data);
       Cookies.set('accessToken', data.accessToken, { expires: 7 });
       Cookies.set('refreshToken', data.refreshToken, { expires: 30 });
       setUser(data.user);
+      console.log('User set after login:', data.user);
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       router.push('/dashboard');
     },
