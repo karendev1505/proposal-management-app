@@ -2,7 +2,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { refreshTokenQueue } from './refreshTokenQueue';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const IS_PRODUCTION = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
 const USE_MOCK_DATA = IS_PRODUCTION && !process.env.NEXT_PUBLIC_API_URL;
 
@@ -33,6 +33,8 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
+    console.log('API Error:', error.response?.status, error.response?.data);
+    
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -55,8 +57,8 @@ api.interceptors.response.use(
           });
           
           const { accessToken: newToken, refreshToken: newRefreshToken } = response.data;
-          Cookies.set('accessToken', newToken, { expires: 7, secure: true });
-          Cookies.set('refreshToken', newRefreshToken, { expires: 30, secure: true });
+          Cookies.set('accessToken', newToken, { expires: 7 });
+          Cookies.set('refreshToken', newRefreshToken, { expires: 30 });
           
           refreshTokenQueue.resolveQueue(newToken);
           refreshTokenQueue.refreshing = false;
@@ -122,7 +124,7 @@ export const authApi = {
   getProfile: async () => {
     if (USE_MOCK_DATA) {
       await new Promise(resolve => setTimeout(resolve, 500));
-      return { id: '1', name: 'Demo User', email: 'demo@example.com', role: 'USER' };
+      return { user: { id: '1', name: 'Demo User', email: 'demo@example.com', role: 'USER' } };
     }
     const response = await api.post('/auth/me');
     return response.data;

@@ -43,12 +43,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { data: profileData, isLoading: profileLoading } = useQuery({
+  const { data: profileData, isLoading: profileLoading, error: profileError } = useQuery({
     queryKey: ['profile'],
     queryFn: authApi.getProfile,
     enabled: !!Cookies.get('accessToken'),
     retry: false,
   });
+
+  useEffect(() => {
+    if (profileError) {
+      console.log('Profile error:', profileError);
+    }
+  }, [profileError]);
 
   useEffect(() => {
     if (profileData?.user) {
