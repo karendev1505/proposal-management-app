@@ -52,6 +52,30 @@ export default function DashboardLayout({
                 </Button>
                 <Button
                   variant="ghost"
+                  onClick={() => router.push('/proposals')}
+                >
+                  Proposals
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => router.push('/templates')}
+                >
+                  Templates
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => router.push('/pricing')}
+                >
+                  Pricing
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => router.push('/subscription')}
+                >
+                  Subscription
+                </Button>
+                <Button
+                  variant="ghost"
                   onClick={() => router.push('/profile')}
                 >
                   Profile
