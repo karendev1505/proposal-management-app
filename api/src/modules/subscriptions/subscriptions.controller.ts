@@ -39,22 +39,24 @@ export class SubscriptionsController {
 
   @Get('my')
   async getMySubscription(@Request() req) {
-    return this.subscriptionsService.getActivePlan(req.user.id);
+    console.log('Request user:', req.user);
+    console.log('User ID:', req.user?.userId);
+    return this.subscriptionsService.getActivePlan(req.user.userId);
   }
 
   @Get('my/stats')
   async getMySubscriptionStats(@Request() req) {
-    return this.subscriptionsService.getSubscriptionStats(req.user.id);
+    return this.subscriptionsService.getSubscriptionStats(req.user.userId);
   }
 
   @Get('my/usage')
   async getMyUsage(@Request() req) {
-    return this.subscriptionsService.getUserUsage(req.user.id);
+    return this.subscriptionsService.getUserUsage(req.user.userId);
   }
 
   @Get('my/limits')
   async checkMyLimits(@Request() req) {
-    return this.subscriptionsService.checkUsageLimits(req.user.id);
+    return this.subscriptionsService.checkUsageLimits(req.user.userId);
   }
 
   @Post()
@@ -63,7 +65,7 @@ export class SubscriptionsController {
     @Body() createSubscriptionDto: CreateSubscriptionDto,
   ) {
     return this.subscriptionsService.createSubscription(
-      req.user.id,
+      req.user.userId,
       createSubscriptionDto.planId,
     );
   }
@@ -73,7 +75,7 @@ export class SubscriptionsController {
     @Request() req,
     @Body() body: { planId: string },
   ) {
-    return this.subscriptionsService.upgradePlan(req.user.id, body.planId);
+    return this.subscriptionsService.upgradePlan(req.user.userId, body.planId);
   }
 
   @Put('cancel')
@@ -82,7 +84,7 @@ export class SubscriptionsController {
     @Body() body: { immediate?: boolean } = {},
   ) {
     return this.subscriptionsService.cancelSubscription(
-      req.user.id,
+      req.user.userId,
       body.immediate || false,
     );
   }

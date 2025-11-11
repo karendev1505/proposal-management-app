@@ -24,16 +24,104 @@ export class SubscriptionsService {
   ) {}
 
   async getActivePlan(userId: string): Promise<SubscriptionWithPlan> {
-    const subscription = await this.prisma.subscription.findUnique({
-      where: { userId },
-      include: { plan: true },
+    this.logger.debug(`Getting active plan for userId: ${userId}`);
+    
+    if (!userId) {
+      throw new BadRequestException('User ID is required');
+    }
+
+    // Get user with their role
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true }
     });
 
+    if (!user) {
+      throw new NotFoundException(`User not found with ID: ${userId}`);
+    }
+
+    const subscription = await this.prisma.subscription.findFirst({
+      where: { 
+        userId,
+        status: SubscriptionStatus.ACTIVE 
+      },
+      include: { plan: true },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    // Determine what plan the user should have based on role
+    const shouldHaveProPlan = user.role === 'ADMIN';
+    
     if (!subscription) {
-      // Auto-create free subscription if none exists
-      const freePlan = await this.plansService.getFreePlan();
-      const newSubscription = await this.createSubscription(userId, freePlan.id);
+      // Create new subscription based on user role
+      let targetPlan;
+      
+      if (shouldHaveProPlan) {
+        // Admin gets Pro plan
+        targetPlan = await this.prisma.plan.findFirst({
+          where: { name: 'pro' }
+        });
+      } else {
+        // Regular user gets Free plan  
+        targetPlan = await this.prisma.plan.findFirst({
+          where: { name: 'free' }
+        });
+      }
+
+      if (!targetPlan) {
+        throw new NotFoundException(`${shouldHaveProPlan ? 'Pro' : 'Free'} plan not found`);
+      }
+      
+      const newSubscription = await this.prisma.subscription.create({
+        data: {
+          userId,
+          planId: targetPlan.id,
+          status: SubscriptionStatus.ACTIVE,
+          currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
+        },
+        include: { plan: true },
+      });
+      
       return newSubscription as SubscriptionWithPlan;
+    }
+
+    // Check if current subscription matches user role
+    const currentlyHasProPlan = subscription.plan.name === 'pro';
+    
+    if (shouldHaveProPlan && !currentlyHasProPlan) {
+      // Admin should have Pro but has Free - upgrade to Pro
+      const proPlan = await this.prisma.plan.findFirst({
+        where: { name: 'pro' }
+      });
+      
+      if (proPlan) {
+        const updatedSubscription = await this.prisma.subscription.update({
+          where: { id: subscription.id },
+          data: {
+            planId: proPlan.id,
+            updatedAt: new Date(),
+          },
+          include: { plan: true },
+        });
+        return updatedSubscription as SubscriptionWithPlan;
+      }
+    } else if (!shouldHaveProPlan && currentlyHasProPlan) {
+      // Regular user has Pro but should have Free - downgrade to Free
+      const freePlan = await this.prisma.plan.findFirst({
+        where: { name: 'free' }
+      });
+      
+      if (freePlan) {
+        const updatedSubscription = await this.prisma.subscription.update({
+          where: { id: subscription.id },
+          data: {
+            planId: freePlan.id,
+            updatedAt: new Date(),
+          },
+          include: { plan: true },
+        });
+        return updatedSubscription as SubscriptionWithPlan;
+      }
     }
 
     return subscription as SubscriptionWithPlan;
@@ -41,7 +129,7 @@ export class SubscriptionsService {
 
   async createSubscription(userId: string, planId: string): Promise<Subscription> {
     // Check if user already has a subscription
-    const existingSubscription = await this.prisma.subscription.findUnique({
+    const existingSubscription = await this.prisma.subscription.findFirst({
       where: { userId },
     });
 
@@ -76,7 +164,7 @@ export class SubscriptionsService {
     }
 
     const updatedSubscription = await this.prisma.subscription.update({
-      where: { userId },
+      where: { id: currentSubscription.id },
       data: {
         planId: newPlanId,
         status: SubscriptionStatus.ACTIVE,
