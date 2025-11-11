@@ -1,7 +1,8 @@
-import { Proposal, ProposalStatus, CreateProposalData, UpdateProposalData } from '@/types/proposal';
-import { Template, CreateTemplateData, UpdateTemplateData } from '@/types/template';
-import { Email, EmailStatus, EmailType, EmailStats } from '@/types/email';
+import { Proposal, ProposalStatus, CreateProposalData, UpdateProposalData, ProposalStats } from '@/types/proposal';
+import { Template, CreateTemplateData, UpdateTemplateData, TemplateType } from '@/types/template';
+import { Email, EmailStatus, EmailPriority, EmailType, EmailStats } from '@/types/email';
 import { Notification, NotificationType, NotificationCategory, NotificationStats } from '@/types/notification';
+import { Signature, PublicProposal, CreateSignatureDto } from '@/types/signature';
 
 export const mockTemplates: Template[] = [
   {
@@ -357,9 +358,7 @@ export const getTemplateById = (id: string) => {
   return mockTemplates.find(t => t.id === id);
 };
 
-export const getProposalByToken = (token: string) => {
-  return mockProposals.find(p => p.publicToken === token);
-};
+// Removed - replaced with signature version below
 
 // Additional utility functions for better mock API simulation
 export const createProposal = (data: CreateProposalData) => {
@@ -733,4 +732,261 @@ export const markAllNotificationsAsRead = () => {
     }
   });
   return mockNotifications;
+};
+
+// Mock Signatures Data
+export const mockSignatures: Signature[] = [
+  {
+    id: 'sig-1',
+    proposalId: '1',
+    signerName: 'John Smith',
+    signerEmail: 'john.smith@example.com',
+    signatureUrl: '/signatures/signature-1.png',
+    ipAddress: '192.168.1.100',
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    signedAt: '2024-01-15T14:30:00Z',
+    createdAt: '2024-01-15T14:30:00Z',
+    updatedAt: '2024-01-15T14:30:00Z',
+  },
+  {
+    id: 'sig-2',
+    proposalId: '2',
+    signerName: 'Sarah Johnson',
+    signerEmail: 'sarah.johnson@company.com',
+    signatureUrl: '/signatures/signature-2.png',
+    ipAddress: '10.0.0.50',
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+    signedAt: '2024-01-10T09:15:00Z',
+    createdAt: '2024-01-10T09:15:00Z',
+    updatedAt: '2024-01-10T09:15:00Z',
+  },
+];
+
+// Mock sign tokens for public access
+const mockSignTokens: Record<string, string> = {
+  'token-proposal-1': '1',
+  'token-proposal-2': '2',
+  'token-proposal-3': '3',
+  'demo-token-123': '1',
+  'sample-token-456': '2',
+};
+
+export const getProposalByToken = (token: string): PublicProposal | null => {
+  const proposalId = mockSignTokens[token];
+  if (!proposalId) return null;
+
+  const proposal = mockProposals.find(p => p.id === proposalId);
+  if (!proposal) return null;
+
+  const signatures = mockSignatures.filter(s => s.proposalId === proposalId);
+
+  return {
+    id: proposal.id,
+    title: proposal.title,
+    content: proposal.content,
+    status: proposal.status,
+    createdAt: proposal.createdAt,
+    updatedAt: proposal.updatedAt,
+    userId: proposal.userId,
+    author: {
+      id: 'user-1',
+      name: 'Demo User',
+      email: 'demo@example.com',
+    },
+    template: proposal.templateId ? mockTemplates.find(t => t.id === proposal.templateId) : undefined,
+    signatures,
+    pdfUrl: proposal.pdfUrl,
+    signedPdfUrl: signatures.length > 0 ? `/pdfs/signed-${proposal.id}.pdf` : undefined,
+  };
+};
+
+export const verifySignToken = (token: string): { valid: boolean; proposalId?: string } => {
+  const proposalId = mockSignTokens[token];
+  return {
+    valid: !!proposalId,
+    proposalId,
+  };
+};
+
+export const createSignature = async (proposalId: string, data: CreateSignatureDto): Promise<Signature> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  const newSignature: Signature = {
+    id: `sig-${Date.now()}`,
+    proposalId,
+    signerName: data.signerName,
+    signerEmail: data.signerEmail,
+    signatureUrl: data.signatureData ? `/signatures/signature-${Date.now()}.png` : undefined,
+    ipAddress: '192.168.1.100', // Mock IP
+    userAgent: navigator.userAgent,
+    signedAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  // Add to mock data
+  mockSignatures.push(newSignature);
+
+  // Update proposal status
+  const proposal = mockProposals.find(p => p.id === proposalId);
+  if (proposal) {
+    proposal.status = ProposalStatus.SIGNED;
+    proposal.signedAt = new Date().toISOString();
+  }
+
+  return newSignature;
+};
+
+export const generateSignLink = (proposalId: string): { token: string; signUrl: string } => {
+  const token = `token-${proposalId}-${Date.now()}`;
+  mockSignTokens[token] = proposalId;
+  
+  return {
+    token,
+    signUrl: `${window.location.origin}/proposal/${token}`,
+  };
+};
+
+// Mock Stats Data
+export interface UserStats {
+  proposals: {
+    total: number;
+    draft: number;
+    sent: number;
+    viewed: number;
+    signed: number;
+    rejected: number;
+    expired: number;
+  };
+  templates: {
+    total: number;
+    created: number;
+  };
+  emails: {
+    total: number;
+    sent: number;
+    delivered: number;
+    failed: number;
+  };
+  notifications: {
+    total: number;
+    unread: number;
+  };
+}
+
+export const getMockUserStats = (): UserStats => {
+  const proposalsByStatus = mockProposals.reduce((acc, proposal) => {
+    const status = proposal.status.toLowerCase();
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const emailsByStatus = mockEmails.reduce((acc, email) => {
+    const status = email.status.toLowerCase();
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const notificationsByRead = mockNotifications.reduce((acc, notification) => {
+    if (notification.read) {
+      acc.read++;
+    } else {
+      acc.unread++;
+    }
+    acc.total++;
+    return acc;
+  }, { total: 0, read: 0, unread: 0 });
+
+  return {
+    proposals: {
+      total: mockProposals.length,
+      draft: proposalsByStatus.draft || 0,
+      sent: proposalsByStatus.sent || 0,
+      viewed: proposalsByStatus.viewed || 0,
+      signed: proposalsByStatus.signed || 0,
+      rejected: proposalsByStatus.rejected || 0,
+      expired: proposalsByStatus.expired || 0,
+    },
+    templates: {
+      total: mockTemplates.length,
+      created: mockTemplates.length, // All templates are user-created in mock
+    },
+    emails: {
+      total: mockEmails.length,
+      sent: emailsByStatus.sent || 0,
+      delivered: emailsByStatus.delivered || 0,
+      failed: emailsByStatus.failed || 0,
+    },
+    notifications: {
+      total: notificationsByRead.total,
+      unread: notificationsByRead.unread,
+    },
+  };
+};
+
+// Mock Email Functions
+export const sendTestEmail = async (to?: string): Promise<{ success: boolean; message: string }> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  return {
+    success: true,
+    message: `Test email sent successfully to ${to || 'default test email'}`,
+  };
+};
+
+export const previewEmailTemplate = async (template: string, context?: any): Promise<{ subject: string; html: string }> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const templates: Record<string, { subject: string; html: string }> = {
+    'proposal-sent': {
+      subject: `New Proposal: ${context?.proposalTitle || 'Sample Proposal'}`,
+      html: `
+        <h1>📋 New Proposal Sent</h1>
+        <p>Hello ${context?.recipientName || 'John Doe'},</p>
+        <p>A new proposal has been sent to you:</p>
+        <h3>${context?.proposalTitle || 'Sample Proposal'}</h3>
+        <p><strong>From:</strong> ${context?.senderName || 'Demo User'}</p>
+        <p><strong>Date:</strong> ${context?.sentDate || new Date().toLocaleDateString()}</p>
+        <a href="${context?.proposalUrl || '#'}" style="background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">View Proposal</a>
+      `,
+    },
+    'proposal-viewed': {
+      subject: `Proposal Viewed: ${context?.proposalTitle || 'Sample Proposal'}`,
+      html: `
+        <h1>👀 Proposal Viewed</h1>
+        <p>Your proposal "${context?.proposalTitle || 'Sample Proposal'}" has been viewed by the recipient.</p>
+      `,
+    },
+    'proposal-signed': {
+      subject: `Proposal Signed: ${context?.proposalTitle || 'Sample Proposal'}`,
+      html: `
+        <h1>✅ Proposal Signed</h1>
+        <p>Great news! Your proposal "${context?.proposalTitle || 'Sample Proposal'}" has been signed by ${context?.signerName || 'the client'}.</p>
+      `,
+    },
+    'thank-you': {
+      subject: `Thank You - ${context?.proposalTitle || 'Sample Proposal'}`,
+      html: `
+        <h1>🙏 Thank You</h1>
+        <p>Thank you for signing the proposal "${context?.proposalTitle || 'Sample Proposal'}".</p>
+      `,
+    },
+    'test-email': {
+      subject: `Test Email from ${context?.companyName || 'Proposal Management System'}`,
+      html: `
+        <h1>🧪 Test Email</h1>
+        <p>This is a test email to verify your email configuration.</p>
+        <p><strong>Sent at:</strong> ${context?.testDate || new Date().toISOString()}</p>
+        <p>✅ Email delivery successful</p>
+      `,
+    },
+  };
+
+  return templates[template] || {
+    subject: 'Template Not Found',
+    html: '<p>Template not found</p>',
+  };
 };

@@ -24,6 +24,8 @@ export interface Proposal {
   publicToken?: string;
   signature?: string;
   userId: string;
+  pdfUrl?: string;
+  signedPdfUrl?: string;
 }
 
 export interface CreateProposalData {
@@ -62,4 +64,14 @@ export interface ProposalListResponse {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+export interface ProposalStats {
+  total: number;
+  draft: number;
+  sent: number;
+  viewed: number;
+  signed: number;
+  rejected: number;
+  expired: number;
 }

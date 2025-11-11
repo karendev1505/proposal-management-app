@@ -1,3 +1,11 @@
+export enum TemplateType {
+  PROPOSAL = 'PROPOSAL',
+  CONTRACT = 'CONTRACT',
+  INVOICE = 'INVOICE',
+  QUOTE = 'QUOTE',
+  OTHER = 'OTHER'
+}
+
 export interface Template {
   id: string;
   name: string;

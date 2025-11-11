@@ -1,9 +1,21 @@
 export enum EmailStatus {
   DRAFT = 'DRAFT',
+  QUEUED = 'QUEUED',
+  SENDING = 'SENDING',
   SENT = 'SENT',
   DELIVERED = 'DELIVERED',
   OPENED = 'OPENED',
-  FAILED = 'FAILED'
+  CLICKED = 'CLICKED',
+  BOUNCED = 'BOUNCED',
+  FAILED = 'FAILED',
+  SPAM = 'SPAM'
+}
+
+export enum EmailPriority {
+  LOW = 'LOW',
+  NORMAL = 'NORMAL',
+  HIGH = 'HIGH',
+  URGENT = 'URGENT'
 }
 
 export enum EmailType {
