@@ -27,6 +27,8 @@ model User {
   signatures    Signature[]
   notifications Notification[]
   templates     Template[]
+  subscription  Subscription?
+  paymentLogs   PaymentLog[]
 
   @@map("users")
 }
@@ -168,4 +170,89 @@ enum NotificationType {
   SUCCESS
   WARNING
   ERROR
+}
+
+model Plan {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  displayName   String
+  description   String?
+  price         Float    @default(0)
+  currency      String   @default("USD")
+  interval      String   @default("month") // month, year
+  features      Json     // JSON object with feature limits
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  subscriptions Subscription[]
+  paymentLogs   PaymentLog[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id                String             @id @default(cuid())
+  status            SubscriptionStatus @default(ACTIVE)
+  currentPeriodEnd  DateTime?
+  cancelAtPeriodEnd Boolean            @default(false)
+  canceledAt        DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId String
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  // Payment tracking
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  paymentLogs          PaymentLog[]
+
+  @@unique([userId])
+  @@map("subscriptions")
+}
+
+model PaymentLog {
+  id            String        @id @default(cuid())
+  amount        Float
+  currency      String        @default("USD")
+  status        PaymentStatus @default(PENDING)
+  description   String?
+  metadata      Json?
+  createdAt     DateTime      @default(now())
+
+  // Relations
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+  planId         String?
+  plan           Plan?        @relation(fields: [planId], references: [id])
+
+  // Stripe tracking
+  stripePaymentIntentId String?
+  stripeInvoiceId       String?
+
+  @@map("payment_logs")
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  EXPIRED
+  PAST_DUE
+  TRIALING
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELED
+  REFUNDED
 }
