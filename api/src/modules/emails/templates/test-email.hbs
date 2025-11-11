@@ -1,0 +1,50 @@
+{{!subject: Test Email from {{companyName}}}}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Email</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #6366f1; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #f9fafb; }
+        .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
+        .info-box { background: white; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #6366f1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Test Email</h1>
+        </div>
+        <div class="content">
+            <h2>Hello {{recipientName}},</h2>
+            <p>This is a test email from the Proposal Management System to verify your email configuration.</p>
+            
+            <div class="info-box">
+                <h3>📧 Email Configuration Test</h3>
+                <p><strong>Sent at:</strong> {{testDate}}</p>
+                <p><strong>System:</strong> {{companyName}}</p>
+                <p><strong>Status:</strong> ✅ Email delivery successful</p>
+            </div>
+            
+            <p>If you received this email, your email configuration is working correctly!</p>
+            
+            <h3>Next Steps:</h3>
+            <ul>
+                <li>✅ Email provider is configured</li>
+                <li>✅ Templates are loading correctly</li>
+                <li>✅ Email delivery is functional</li>
+            </ul>
+            
+            <p>You can now use the system to send proposal notifications and other automated emails.</p>
+        </div>
+        <div class="footer">
+            <p>This is an automated test email from {{companyName}}</p>
+            <p>© 2024 Proposal Management System. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
