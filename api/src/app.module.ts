@@ -16,6 +16,9 @@ import { ClientsModule } from './modules/clients/clients.module';
 import { HealthModule } from './modules/health/health.module';
 import { PlansModule } from './modules/plans/plans.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
+import { WorkspacesModule } from './modules/workspaces/workspaces.module';
+import { AuditModule } from './modules/audit/audit.module';
+import { AIModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -41,6 +44,9 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
     HealthModule,
     PlansModule,
     SubscriptionsModule,
+    WorkspacesModule,
+    AuditModule,
+    AIModule,
   ],
   controllers: [AppController],
 })
