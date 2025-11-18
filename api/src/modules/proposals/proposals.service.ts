@@ -19,12 +19,13 @@ export class ProposalsService {
     private pdfService: PdfService,
   ) {}
 
-  async findAll(query: QueryProposalDto, userId: string) {
+  async findAll(query: QueryProposalDto, userId: string, workspaceId?: string) {
     const { status, search, page = 1, limit = 10 } = query;
     const skip = (page - 1) * limit;
+    
     const where: Prisma.ProposalWhereInput = {
-      authorId: userId,
       AND: [
+        workspaceId ? { workspaceId } : { authorId: userId },
         status ? { status } : {},
         search
           ? {
@@ -37,13 +38,37 @@ export class ProposalsService {
       ],
     };
 
+    // If workspaceId is provided, verify membership
+    if (workspaceId) {
+      const membership = await this.prisma.membership.findUnique({
+        where: {
+          userId_workspaceId: {
+            userId,
+            workspaceId,
+          },
+        },
+      });
+      if (!membership) {
+        throw new ForbiddenException('You are not a member of this workspace');
+      }
+    }
+
     const [items, total] = await Promise.all([
       this.prisma.proposal.findMany({
         where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: { author: true, template: true },
+        include: { 
+          author: true, 
+          template: true,
+          workspace: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
       }),
       this.prisma.proposal.count({ where }),
     ]);
@@ -54,14 +79,41 @@ export class ProposalsService {
   async findOne(id: string, userId: string) {
     const proposal = await this.prisma.proposal.findUnique({
       where: { id },
-      include: { author: true, template: true, signatures: true },
+      include: { 
+        author: true, 
+        template: true, 
+        signatures: true,
+        workspace: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
     if (!proposal) throw new NotFoundException('Proposal not found');
-    if (proposal.authorId !== userId) throw new ForbiddenException('Access denied');
+    
+    // Check access: either author or workspace member
+    if (proposal.workspaceId) {
+      const membership = await this.prisma.membership.findUnique({
+        where: {
+          userId_workspaceId: {
+            userId,
+            workspaceId: proposal.workspaceId,
+          },
+        },
+      });
+      if (!membership) {
+        throw new ForbiddenException('Access denied');
+      }
+    } else if (proposal.authorId !== userId) {
+      throw new ForbiddenException('Access denied');
+    }
+    
     return proposal;
   }
 
-  async create(dto: CreateProposalDto, userId: string) {
+  async create(dto: CreateProposalDto, userId: string, workspaceId?: string) {
     let content = dto.content;
     if (!content && dto.templateId) {
       const tpl = await this.prisma.template.findUnique({ where: { id: dto.templateId } });
@@ -70,6 +122,32 @@ export class ProposalsService {
     }
     if (!content) throw new BadRequestException('Invalid proposal content');
 
+    // If workspaceId is provided, verify membership and permissions
+    if (workspaceId) {
+      const membership = await this.prisma.membership.findUnique({
+        where: {
+          userId_workspaceId: {
+            userId,
+            workspaceId,
+          },
+        },
+      });
+      if (!membership) {
+        throw new ForbiddenException('You are not a member of this workspace');
+      }
+      // VIEWER role cannot create proposals
+      if (membership.role === 'VIEWER') {
+        throw new ForbiddenException('Viewers cannot create proposals');
+      }
+    }
+
+    // Get user's active workspace if not provided
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { activeWorkspaceId: true },
+    });
+    const finalWorkspaceId = workspaceId || user?.activeWorkspaceId;
+
     return this.prisma.proposal.create({
       data: {
         title: dto.title,
@@ -77,8 +155,10 @@ export class ProposalsService {
         status: ProposalStatus.DRAFT,
         author: { connect: { id: userId } },
         template: dto.templateId ? { connect: { id: dto.templateId } } : undefined,
+        workspace: finalWorkspaceId ? { connect: { id: finalWorkspaceId } } : undefined,
+        lastEditedBy: userId,
       },
-      include: { author: true, template: true },
+      include: { author: true, template: true, workspace: true },
     });
   }
 
@@ -87,15 +167,54 @@ export class ProposalsService {
     if (proposal.status !== ProposalStatus.DRAFT) {
       throw new ForbiddenException('Only DRAFT proposals can be edited');
     }
+
+    // Check workspace permissions for editing
+    if (proposal.workspaceId) {
+      const membership = await this.prisma.membership.findUnique({
+        where: {
+          userId_workspaceId: {
+            userId,
+            workspaceId: proposal.workspaceId,
+          },
+        },
+      });
+      // VIEWER role cannot edit
+      if (membership?.role === 'VIEWER') {
+        throw new ForbiddenException('Viewers cannot edit proposals');
+      }
+    }
+
     return this.prisma.proposal.update({
       where: { id },
-      data: dto as Prisma.ProposalUpdateInput,
-      include: { author: true, template: true },
+      data: {
+        ...(dto as Prisma.ProposalUpdateInput),
+        lastEditedBy: userId,
+      },
+      include: { author: true, template: true, workspace: true },
     });
   }
 
   async remove(id: string, userId: string) {
     const proposal = await this.findOne(id, userId);
+    
+    // Check workspace permissions for deletion
+    if (proposal.workspaceId) {
+      const membership = await this.prisma.membership.findUnique({
+        where: {
+          userId_workspaceId: {
+            userId,
+            workspaceId: proposal.workspaceId,
+          },
+        },
+      });
+      // Only OWNER and ADMIN can delete, or the author
+      if (membership) {
+        if (membership.role !== 'OWNER' && membership.role !== 'ADMIN' && proposal.authorId !== userId) {
+          throw new ForbiddenException('Only owners, admins, or the author can delete proposals');
+        }
+      }
+    }
+
     await this.prisma.proposal.delete({ where: { id: proposal.id } });
     return { message: 'Proposal deleted' };
   }

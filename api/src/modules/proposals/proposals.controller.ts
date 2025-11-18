@@ -13,37 +13,45 @@ export class ProposalsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   create(@Body() createProposalDto: CreateProposalDto, @Request() req) {
-    return this.proposalsService.create(createProposalDto, req.user.userId);
+    const userId = req.user.userId || req.user.id;
+    const workspaceId = createProposalDto['workspaceId'] || req.user.activeWorkspaceId;
+    return this.proposalsService.create(createProposalDto, userId, workspaceId);
   }
 
   @Get()
   @UseGuards(JwtAuthGuard)
   findAll(@Query() query: QueryProposalDto, @Request() req) {
-    return this.proposalsService.findAll(query, req.user.userId);
+    const userId = req.user.userId || req.user.id;
+    const workspaceId = query['workspaceId'] || req.user.activeWorkspaceId;
+    return this.proposalsService.findAll(query, userId, workspaceId);
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   findOne(@Param('id') id: string, @Request() req) {
-    return this.proposalsService.findOne(id, req.user.userId);
+    const userId = req.user.userId || req.user.id;
+    return this.proposalsService.findOne(id, userId);
   }
 
   @Put(':id')
   @UseGuards(JwtAuthGuard)
   update(@Param('id') id: string, @Body() updateProposalDto: UpdateProposalDto, @Request() req) {
-    return this.proposalsService.update(id, updateProposalDto, req.user.userId);
+    const userId = req.user.userId || req.user.id;
+    return this.proposalsService.update(id, updateProposalDto, userId);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   remove(@Param('id') id: string, @Request() req) {
-    return this.proposalsService.remove(id, req.user.userId);
+    const userId = req.user.userId || req.user.id;
+    return this.proposalsService.remove(id, userId);
   }
 
   @Post('send/:id')
   @UseGuards(JwtAuthGuard)
   send(@Param('id') id: string, @Body() body: SendProposalDto, @Request() req) {
-    return this.proposalsService.send(id, body, req.user.userId);
+    const userId = req.user.userId || req.user.id;
+    return this.proposalsService.send(id, body, userId);
   }
 
   @Get('public/:token')
