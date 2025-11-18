@@ -39,24 +39,26 @@ export class SubscriptionsController {
 
   @Get('my')
   async getMySubscription(@Request() req) {
-    console.log('Request user:', req.user);
-    console.log('User ID:', req.user?.userId);
-    return this.subscriptionsService.getActivePlan(req.user.userId);
+    const userId = req.user.userId || req.user.id;
+    return this.subscriptionsService.getActivePlan(userId);
   }
 
   @Get('my/stats')
   async getMySubscriptionStats(@Request() req) {
-    return this.subscriptionsService.getSubscriptionStats(req.user.userId);
+    const userId = req.user.userId || req.user.id;
+    return this.subscriptionsService.getSubscriptionStats(userId);
   }
 
   @Get('my/usage')
   async getMyUsage(@Request() req) {
-    return this.subscriptionsService.getUserUsage(req.user.userId);
+    const userId = req.user.userId || req.user.id;
+    return this.subscriptionsService.getUserUsage(userId);
   }
 
   @Get('my/limits')
   async checkMyLimits(@Request() req) {
-    return this.subscriptionsService.checkUsageLimits(req.user.userId);
+    const userId = req.user.userId || req.user.id;
+    return this.subscriptionsService.checkUsageLimits(userId);
   }
 
   @Post()
@@ -64,8 +66,9 @@ export class SubscriptionsController {
     @Request() req,
     @Body() createSubscriptionDto: CreateSubscriptionDto,
   ) {
+    const userId = req.user.userId || req.user.id;
     return this.subscriptionsService.createSubscription(
-      req.user.userId,
+      userId,
       createSubscriptionDto.planId,
     );
   }
@@ -75,7 +78,8 @@ export class SubscriptionsController {
     @Request() req,
     @Body() body: { planId: string },
   ) {
-    return this.subscriptionsService.upgradePlan(req.user.userId, body.planId);
+    const userId = req.user.userId || req.user.id;
+    return this.subscriptionsService.upgradePlan(userId, body.planId);
   }
 
   @Put('cancel')
