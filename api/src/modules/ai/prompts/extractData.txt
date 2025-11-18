@@ -1,0 +1,16 @@
+Extract key information from the following document text:
+
+{{documentText}}
+
+Extract and return as JSON:
+{
+  "clientName": "...",
+  "projectSummary": "...",
+  "estimatedBudget": "...",
+  "goals": ["..."],
+  "timeline": "...",
+  "keyRequirements": ["..."]
+}
+
+If any field cannot be determined, use null.
+

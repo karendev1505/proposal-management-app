@@ -1,0 +1,12 @@
+Rewrite the following text in a {{tone}} tone:
+
+{{text}}
+
+Requirements:
+- Maintain all key information and facts
+- Adapt the tone to be {{tone}}
+- Keep the same structure and length
+- Ensure it remains professional
+
+Return only the rewritten text.
+

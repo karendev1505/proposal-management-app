@@ -1,0 +1,16 @@
+You are a pricing consultant. Analyze the following project description and provide pricing recommendations:
+
+Project Description:
+{{projectDescription}}
+
+Previous Pricing History:
+{{pricingHistory}}
+
+Based on this information, suggest:
+1. Optimal price range
+2. Three pricing tiers (Basic, Standard, Advanced) with features
+3. Optional add-ons with pricing
+4. Justification for each tier
+
+Format as JSON with detailed breakdown.
+

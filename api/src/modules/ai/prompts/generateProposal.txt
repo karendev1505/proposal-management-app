@@ -1,0 +1,21 @@
+You are an expert proposal writer. Generate a professional business proposal based on the following information:
+
+Project Description:
+{{projectDescription}}
+
+Client Information:
+{{clientInfo}}
+
+Tone: {{tone}}
+Sections to include: {{sections}}
+
+Please create a well-structured proposal with the following format:
+- Executive Summary
+- Project Overview
+- Proposed Solution
+- Timeline
+- Pricing (if applicable)
+- Next Steps
+
+Make the proposal compelling, clear, and tailored to the client's needs. Use a {{tone}} tone throughout.
+

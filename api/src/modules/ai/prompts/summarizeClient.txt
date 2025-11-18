@@ -1,0 +1,14 @@
+Analyze the following client information and provide a summary:
+
+{{clientInfo}}
+
+Please extract:
+1. Client name and company
+2. Key requirements and goals
+3. Budget range (if mentioned)
+4. Timeline expectations
+5. Preferred communication style
+6. Recommended proposal tone
+
+Format as JSON with these fields.
+
