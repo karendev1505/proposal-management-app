@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { subscriptionsAPI, Plan, PlanFeatures, Subscription } from '@/lib/api/subscriptions';
+import { useToast } from '@/hooks/useToast';
 
 
 export default function PricingPage() {
@@ -12,6 +13,7 @@ export default function PricingPage() {
   const [loading, setLoading] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { addToast } = useToast();
 
   useEffect(() => {
     loadData();
@@ -49,15 +51,40 @@ export default function PricingPage() {
 
   const handleUpgrade = async (planId: string) => {
     setLoading(true);
+    setError(null);
+    
     try {
+      console.log('Upgrading to plan:', planId);
+      const selectedPlan = plans.find(p => p.id === planId);
+      
       if (currentSubscription) {
+        console.log('Upgrading existing subscription');
         await subscriptionsAPI.upgradeSubscription(planId);
+        addToast({
+          type: 'success',
+          title: 'Plan Upgraded!',
+          message: `You have successfully upgraded to ${selectedPlan?.displayName || 'the new plan'}.`,
+        });
       } else {
+        console.log('Creating new subscription');
         await subscriptionsAPI.createSubscription(planId);
+        addToast({
+          type: 'success',
+          title: 'Subscription Created!',
+          message: `You have successfully subscribed to ${selectedPlan?.displayName || 'the plan'}.`,
+        });
       }
+      
       await loadData(); // Reload data to show updated subscription
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to upgrade plan');
+    } catch (error: any) {
+      console.error('Upgrade error:', error);
+      const errorMessage = error?.message || 'Failed to upgrade plan. Please try again.';
+      setError(errorMessage);
+      addToast({
+        type: 'error',
+        title: 'Upgrade Failed',
+        message: errorMessage,
+      });
     } finally {
       setLoading(false);
     }
@@ -125,6 +152,13 @@ export default function PricingPage() {
             <Badge className="bg-green-100 text-green-800">
               Current: {currentSubscription.plan.displayName}
             </Badge>
+          </div>
+        )}
+        {error && (
+          <div className="mt-4 max-w-2xl mx-auto">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-800">{error}</p>
+            </div>
           </div>
         )}
       </div>
@@ -261,7 +295,12 @@ export default function PricingPage() {
             <Button
               variant={getButtonVariant(plan)}
               className="w-full"
-              onClick={() => handleUpgrade(plan.id)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Button clicked for plan:', plan.id);
+                handleUpgrade(plan.id);
+              }}
               disabled={loading || (currentSubscription && plan.id === currentSubscription.planId)}
             >
               {loading ? 'Processing...' : getButtonText(plan)}
