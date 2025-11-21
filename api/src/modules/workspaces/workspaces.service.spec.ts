@@ -42,11 +42,12 @@ describe('WorkspacesService', () => {
   };
 
   const mockConfigService = {
-    get: jest.fn().mockImplementation((key: string) => {
-      const config = {
+    get: jest.fn().mockImplementation((key: string, defaultValue?: string) => {
+      const config: Record<string, string> = {
         FRONTEND_URL: 'http://localhost:3000',
+        PUBLIC_APP_URL: 'http://localhost:3000',
       };
-      return config[key];
+      return config[key] || defaultValue;
     }),
   };
 
@@ -332,8 +333,18 @@ describe('WorkspacesService', () => {
         workspaceId,
         role: inviteDto.role,
         expiresAt: new Date(),
+        workspace: {
+          id: workspaceId,
+          name: 'Test Workspace',
+          slug: 'test-workspace',
+        },
+        inviter: {
+          name: 'Test User',
+          email: 'owner@example.com',
+        },
       });
       mockEmailsService.sendTemplateEmail.mockResolvedValue(true);
+      mockConfigService.get.mockReturnValue('http://localhost:3000');
 
       const result = await service.inviteMember(workspaceId, userId, inviteDto);
 
