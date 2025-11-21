@@ -84,6 +84,7 @@ export class WorkspacesService {
   }
 
   async getUserWorkspaces(userId: string) {
+    // Use include to avoid N+1 queries - all data fetched in single query
     const memberships = await this.prisma.membership.findMany({
       where: { userId },
       include: {
