@@ -80,7 +80,11 @@ model Proposal {
   signatures   Signature[]
   events       ProposalEvent[]
 
+  @@index([authorId])
   @@index([workspaceId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([clientId])
   @@map("proposals")
 }
 
@@ -318,6 +322,7 @@ model Membership {
   @@unique([userId, workspaceId])
   @@index([workspaceId])
   @@index([userId])
+  @@index([role])
   @@map("memberships")
 }
 
@@ -401,6 +406,8 @@ model AIUsage {
 
   @@index([userId])
   @@index([workspaceId])
+  @@index([action])
   @@index([createdAt])
+  @@index([model])
   @@map("ai_usage")
 }
