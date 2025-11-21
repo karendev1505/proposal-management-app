@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 
 export interface AuditLogData {
@@ -12,6 +12,8 @@ export interface AuditLogData {
 
 @Injectable()
 export class AuditService {
+  private readonly logger = new Logger(AuditService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async logAction(data: AuditLogData) {
@@ -28,7 +30,13 @@ export class AuditService {
       });
     } catch (error) {
       // Log error but don't throw - audit logging should not break the main flow
-      console.error('Failed to log audit action:', error);
+      this.logger.error('Failed to log audit action', {
+        error: error.message,
+        action: data.action,
+        entity: data.entity,
+        workspaceId: data.workspaceId,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      });
     }
   }
 
@@ -44,7 +52,16 @@ export class AuditService {
       offset?: number;
     },
   ) {
-    const where: any = {
+    const where: {
+      workspaceId: string;
+      userId?: string;
+      action?: string;
+      entity?: string;
+      createdAt?: {
+        gte?: Date;
+        lte?: Date;
+      };
+    } = {
       workspaceId,
     };
 

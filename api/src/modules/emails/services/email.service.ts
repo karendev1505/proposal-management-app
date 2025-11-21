@@ -48,7 +48,7 @@ export class EmailService implements OnModuleInit {
         this.logger.warn('Email sending is disabled');
         this.provider = {
           async sendMail(options: EmailOptions) {
-            console.log('Email sending is disabled. Would have sent:', {
+            this.logger.debug('Email sending is disabled. Would have sent:', {
               to: options.to,
               subject: options.subject,
               template: options.template,
