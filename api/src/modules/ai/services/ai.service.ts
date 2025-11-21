@@ -1,6 +1,7 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../../prisma.service';
+import { Prisma } from '@prisma/client';
 import OpenAI from 'openai';
 import { PromptService } from './prompt.service';
 
@@ -261,7 +262,13 @@ export class AIService {
     userId: string,
     workspaceId: string | null,
     projectDescription: string,
-    pricingHistory?: any[],
+    pricingHistory?: Array<{
+      projectDescription: string;
+      price: number;
+      currency: string;
+      date: string;
+      accepted: boolean;
+    }>,
     options?: AIGenerateOptions,
   ) {
     if (!this.openai) {
@@ -344,9 +351,9 @@ export class AIService {
       cost: number;
       model: string;
       action: string;
-      metadata?: any;
+      metadata?: Record<string, unknown>;
     },
-  ) {
+  ): Promise<void> {
     try {
       await this.prisma.aIUsage.create({
         data: {
@@ -356,7 +363,7 @@ export class AIService {
           cost: data.cost,
           model: data.model,
           action: data.action,
-          metadata: data.metadata || {},
+          metadata: (data.metadata || {}) as Prisma.InputJsonValue,
         },
       });
     } catch (error) {

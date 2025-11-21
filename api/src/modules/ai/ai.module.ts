@@ -4,8 +4,10 @@ import { AIService } from './services/ai.service';
 import { PromptService } from './services/prompt.service';
 import { DocumentParserService } from './services/document-parser.service';
 import { PrismaService } from '../../prisma.service';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 
 @Module({
+  imports: [SubscriptionsModule],
   controllers: [AIController],
   providers: [
     AIService,

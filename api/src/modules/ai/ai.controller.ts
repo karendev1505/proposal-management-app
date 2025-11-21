@@ -9,14 +9,34 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { WorkspaceGuard } from '../../common/guards/workspace.guard';
+import { PlanLimitGuard, PlanLimit } from '../../common/guards/plan-limit.guard';
 import { AIService } from './services/ai.service';
 import { DocumentParserService } from './services/document-parser.service';
 import { GenerateProposalDto } from './dto/generate-proposal.dto';
 import { ImproveSectionDto } from './dto/improve-section.dto';
 import { RewriteToneDto } from './dto/rewrite-tone.dto';
 import { PricingRecommendationsDto } from './dto/pricing-recommendations.dto';
+// Shared types - will be available after package setup
+interface AuthenticatedRequest extends Express.Request {
+  user: {
+    id: string;
+    userId?: string;
+    email: string;
+    name: string;
+    role: string;
+    activeWorkspaceId?: string | null;
+  };
+  correlationId?: string;
+  workspaceId?: string;
+  workspaceRole?: string;
+  query?: {
+    workspaceId?: string;
+    [key: string]: unknown;
+  };
+}
 
 @Controller('ai')
 @UseGuards(JwtAuthGuard)
@@ -27,8 +47,11 @@ export class AIController {
   ) {}
 
   @Post('proposals/generate')
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
+  @UseGuards(PlanLimitGuard)
+  @PlanLimit('ai_generate')
   async generateProposal(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Body() dto: GenerateProposalDto,
   ) {
     const userId = req.user.userId || req.user.id;
@@ -40,7 +63,10 @@ export class AIController {
   }
 
   @Post('proposals/improve')
-  async improveSection(@Request() req: any, @Body() dto: ImproveSectionDto) {
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
+  @UseGuards(PlanLimitGuard)
+  @PlanLimit('ai_improve')
+  async improveSection(@Request() req: AuthenticatedRequest, @Body() dto: ImproveSectionDto) {
     const userId = req.user.userId || req.user.id;
     const workspaceId = req.user.activeWorkspaceId || req.query?.workspaceId;
 
@@ -56,7 +82,10 @@ export class AIController {
   }
 
   @Post('proposals/rewrite-tone')
-  async rewriteTone(@Request() req: any, @Body() dto: RewriteToneDto) {
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
+  @UseGuards(PlanLimitGuard)
+  @PlanLimit('ai_rewrite')
+  async rewriteTone(@Request() req: AuthenticatedRequest, @Body() dto: RewriteToneDto) {
     const userId = req.user.userId || req.user.id;
     const workspaceId = req.user.activeWorkspaceId || req.query?.workspaceId;
 
@@ -72,8 +101,11 @@ export class AIController {
   }
 
   @Post('pricing/recommendations')
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
+  @UseGuards(PlanLimitGuard)
+  @PlanLimit('ai_pricing')
   async getPricingRecommendations(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Body() dto: PricingRecommendationsDto,
   ) {
     const userId = req.user.userId || req.user.id;
@@ -90,7 +122,7 @@ export class AIController {
   @Post('extract')
   @UseInterceptors(FileInterceptor('file'))
   async extractFromDocument(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) {
@@ -106,7 +138,7 @@ export class AIController {
   @Post('convert-document')
   @UseInterceptors(FileInterceptor('file'))
   async convertDocumentToProposal(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @UploadedFile() file: Express.Multer.File,
     @Body('tone') tone?: string,
   ) {
