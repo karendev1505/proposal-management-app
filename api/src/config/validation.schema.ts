@@ -67,4 +67,16 @@ export const configValidationSchema = Joi.object({
   
   // CORS
   CORS_ORIGIN: Joi.string().uri().optional(),
+  
+  // OpenAI Configuration
+  OPENAI_API_KEY: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.string().optional(), // Optional in production, but recommended
+    otherwise: Joi.string().optional(),
+  }).pattern(/^sk-[a-zA-Z0-9]{32,}$/, {
+    name: 'openai_api_key_format',
+    invert: false,
+  }).messages({
+    'string.pattern.base': 'OPENAI_API_KEY must start with "sk-" and be at least 32 characters long',
+  }),
 });
