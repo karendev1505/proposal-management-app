@@ -3,6 +3,7 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -20,8 +21,8 @@ async function bootstrap() {
     // Global interceptors
     app.useGlobalInterceptors(new LoggingInterceptor());
     
-    // Global filters
-    app.useGlobalFilters(new HttpExceptionFilter());
+    // Global filters - AllExceptionsFilter must be last to catch all errors
+    app.useGlobalFilters(new AllExceptionsFilter(), new HttpExceptionFilter());
 
     // CORS configuration
     app.enableCors({
