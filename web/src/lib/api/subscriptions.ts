@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import api from '../api';
 
 export interface Plan {
   id: string;
@@ -73,38 +73,28 @@ export interface SubscriptionStats {
 class SubscriptionsAPI {
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: {
+      method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+      data?: any;
+    } = {}
   ): Promise<T> {
-    // Import Cookies here to avoid SSR issues
-    const Cookies = (await import('js-cookie')).default;
-    const token = Cookies.get('accessToken');
+    const { method = 'GET', data } = options;
     
-    console.log('Subscriptions API request:', {
-      endpoint,
-      hasToken: !!token,
-      tokenPreview: token ? `${token.substring(0, 20)}...` : 'none'
-    });
-    
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...options.headers,
-      },
-    });
-
-    if (!response.ok) {
-      console.error('Subscriptions API error:', {
-        status: response.status,
-        endpoint,
-        hasToken: !!token
+    try {
+      const response = await api.request<T>({
+        url: endpoint,
+        method,
+        data,
       });
-      const error = await response.json().catch(() => ({ message: 'Request failed' }));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Subscriptions API error:', {
+        status: error.response?.status,
+        endpoint,
+        message: error.message,
+      });
+      throw error;
     }
-
-    return response.json();
   }
 
   // Plans
@@ -142,21 +132,21 @@ class SubscriptionsAPI {
   async createSubscription(planId: string): Promise<Subscription> {
     return this.request<Subscription>('/subscriptions', {
       method: 'POST',
-      body: JSON.stringify({ planId }),
+      data: { planId },
     });
   }
 
   async upgradeSubscription(planId: string): Promise<Subscription> {
     return this.request<Subscription>('/subscriptions/upgrade', {
       method: 'PUT',
-      body: JSON.stringify({ planId }),
+      data: { planId },
     });
   }
 
   async cancelSubscription(immediate = false): Promise<Subscription> {
     return this.request<Subscription>('/subscriptions/cancel', {
       method: 'PUT',
-      body: JSON.stringify({ immediate }),
+      data: { immediate },
     });
   }
 }
