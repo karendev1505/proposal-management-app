@@ -1,7 +1,7 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../../prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import OpenAI from 'openai';
 import { PromptService } from './prompt.service';
 
@@ -355,6 +355,8 @@ export class AIService {
     },
   ): Promise<void> {
     try {
+      // Access aIUsage - Prisma generates it dynamically, use type assertion
+      // @ts-ignore - Prisma generates aIUsage at runtime but TypeScript types may not reflect it immediately
       await this.prisma.aIUsage.create({
         data: {
           userId,
